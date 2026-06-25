@@ -5,7 +5,6 @@ import "./globals.css";
 import "@/lib/gsap-setup"; 
 
 import SmoothScroll from "@/components/smooth-scroll";
-import { LiquidBackground } from "@/components/liquid-background";
 import CustomCursor from "@/hooks/custom-cursor";
 import Navbar from "@/components/navbar";
 

@@ -3,7 +3,6 @@ import HeroSection from '@/components/sections/hero';
 import { PortfolioSection } from "@/components/sections/portfolio";
 import Navbar from "@/components/navbar";
 import CustomCursor from '@/hooks/custom-cursor';
-import { LiquidBackground } from '@/components/liquid-background';
 import ScrollSpy from '@/components/scroll-spy';
 import ContactSection from '@/components/sections/contactus';
 
