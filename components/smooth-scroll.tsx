@@ -8,6 +8,10 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
   const lenisRef = useRef<any>(null);
 
   useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
     function update(time: number) {
       lenisRef.current?.lenis?.raf(time * 1000);
     }

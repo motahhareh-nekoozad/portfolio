@@ -26,6 +26,44 @@ export default function ScrollSpy({ sections = defaultSections }: ScrollSpyProps
   const lenis = useLenis();
 
   useEffect(() => {
+    const handleHide = () => {
+      if (containerRef.current) {
+        gsap.to(containerRef.current, {
+          x: 160,               
+          opacity: 0,           
+          scale: 0.8,           
+          rotate: 15,           
+          pointerEvents: "none",
+          duration: 0.7,
+          ease: "power3.inOut"
+        });
+      }
+    };
+
+    const handleShow = () => {
+      if (containerRef.current) {
+        gsap.to(containerRef.current, {
+          x: 0,                 
+          opacity: 1,         
+          scale: 1,             
+          rotate: 0,            
+          pointerEvents: "auto", 
+          duration: 0.9,
+          ease: "back.out(1.2)" 
+        });
+      }
+    };
+
+    window.addEventListener("project-explore", handleHide);
+    window.addEventListener("project-back", handleShow);
+
+    return () => {
+      window.removeEventListener("project-explore", handleHide);
+      window.removeEventListener("project-back", handleShow);
+    };
+  }, []);
+
+  useEffect(() => {
     const observerOptions = {
       root: null,
       rootMargin: "-20% 0px -20% 0px",
@@ -117,7 +155,7 @@ export default function ScrollSpy({ sections = defaultSections }: ScrollSpyProps
   return (
     <div
       ref={containerRef}
-      className="fixed right-6 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-7 px-4 rounded-3xl border border-white/10 bg-[#060608]/40 backdrop-blur-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] select-none group/panel hover:border-purple-500/20 transition-colors duration-500"
+      className="fixed right-6 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-7 px-4 rounded-3xl border border-white/10 bg-[#060608]/40 backdrop-blur-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] select-none group/panel hover:border-purple-500/20 transition-colors duration-500 will-change-transform"
     >
       <div className="relative flex flex-col gap-8 items-center">
         <div className="absolute w-[2px] h-[calc(100%-16px)] bg-white/5 top-2 left-1/2 -translate-x-1/2 pointer-events-none overflow-hidden rounded-full fiber-track" />

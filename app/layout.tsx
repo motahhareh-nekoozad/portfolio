@@ -7,6 +7,7 @@ import "@/lib/gsap-setup";
 import SmoothScroll from "@/components/smooth-scroll";
 import CustomCursor from "@/hooks/custom-cursor";
 import Navbar from "@/components/navbar";
+import ContactFloatButton from "@/components/contact-float-button"; 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,20 +29,27 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  if (typeof window !== 'undefined') {
-    window.history.scrollRestoration = 'manual';
-  }
+  const handleOpenContactModal = () => {
+    console.log("Open Contact Modal");
+  };
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning 
     >
-    <body className="min-h-full flex flex-col">
+    <body 
+      className="min-h-full flex flex-col"
+      suppressHydrationWarning 
+    >
       <div id="scroll-cover" className="fixed inset-0 z-[9999] bg-[#030303] opacity-0 pointer-events-none transition-opacity duration-300" />
       <CustomCursor />
+      
       <SmoothScroll>
         <Navbar />
         {children}
+        <ContactFloatButton/>
       </SmoothScroll>
     </body>
     </html>

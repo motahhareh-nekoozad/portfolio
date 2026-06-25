@@ -4,19 +4,25 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { MeshDistortMaterial, Plane, Environment } from "@react-three/drei";
+import { MeshDistortMaterial, Plane } from "@react-three/drei";
 import * as THREE from "three";
+import { ProjectDetail, Project } from "@/components/project-detail";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const PROJECTS = [
+const PROJECTS: Project[] = [
   {
     id: "01",
     title: "NEXUS BEYOND",
     color: "#0a0303",
     accent: "#ef4444", 
     desc: "آینده‌نگری در طراحی رابط کاربری با تمرکز بر تعاملات سه بعدی و سرعت رندرینگ فوق‌العاده.",
-    img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564"
+    img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564",
+    gallery: [
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564",
+      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1000",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1000",
+    ]
   },
   {
     id: "02",
@@ -24,7 +30,12 @@ const PROJECTS = [
     color: "#030712",
     accent: "#3b82f6", 
     desc: "سیستم مانیتورینگ هوشمند برای دیتاسنترهای نسل جدید با پالت رنگی نئون.",
-    img: "https://images.unsplash.com/photo-1633167606207-d840b5070fc2?q=80&w=2564"
+    img: "https://images.unsplash.com/photo-1633167606207-d840b5070fc2?q=80&w=2564",
+    gallery: [
+      "https://images.unsplash.com/photo-1633167606207-d840b5070fc2?q=80&w=2564",
+      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1000",
+      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1000",
+    ]
   },
   {
     id: "03",
@@ -32,7 +43,12 @@ const PROJECTS = [
     color: "#03140d",
     accent: "#10b981", 
     desc: "تجربه‌ای فراتر از واقعیت در دنیای دیجیتال با هوش مصنوعی.",
-    img: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2564"
+    img: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2564",
+    gallery: [
+      "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2564",
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000",
+      "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=1000",
+    ]
   },
   {
     id: "04",
@@ -40,7 +56,12 @@ const PROJECTS = [
     color: "#140c03",
     accent: "#f59e0b", 
     desc: "شبکه‌های هوشمند نسل جدید مبتنی بر بلاکچین برای مدیریت توزیع انرژی پاک.",
-    img: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2564"
+    img: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2564",
+    gallery: [
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2564",
+      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000",
+      "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?q=80&w=1000",
+    ]
   }
 ];
 
@@ -51,6 +72,8 @@ const GlobalMercuryBackground = memo(() => {
   const lastIndexRef = useRef(0);
 
   const projectColors = useMemo(() => PROJECTS.map(p => new THREE.Color(p.accent)), []);
+  
+  const zoomObj = useMemo(() => ({ value: 0 }), []);
 
   useEffect(() => {
     const handleProjectChange = (e: Event) => {
@@ -72,12 +95,40 @@ const GlobalMercuryBackground = memo(() => {
       }
     };
 
+    const handleExplore = () => {
+      gsap.to(zoomObj, {
+        value: 1,
+        duration: 1.2,
+        ease: "power3.inOut"
+      });
+    };
+
+    const handleBack = () => {
+      gsap.to(zoomObj, {
+        value: 0,
+        duration: 1.0,
+        ease: "power3.out"
+      });
+    };
+
     window.addEventListener("project-change", handleProjectChange);
-    return () => window.removeEventListener("project-change", handleProjectChange);
-  }, [projectColors]);
+    window.addEventListener("project-explore", handleExplore);
+    window.addEventListener("project-back", handleBack);
+
+    return () => {
+      window.removeEventListener("project-change", handleProjectChange);
+      window.removeEventListener("project-explore", handleExplore);
+      window.removeEventListener("project-back", handleBack);
+    };
+  }, [projectColors, zoomObj]);
 
   useFrame((state) => {
-    const { clock, mouse } = state;
+    const { clock, mouse, camera } = state;
+
+    camera.position.z = THREE.MathUtils.lerp(4, -1.2, zoomObj.value);
+    camera.fov = THREE.MathUtils.lerp(50, 105, zoomObj.value);
+    camera.updateProjectionMatrix();
+
     if (meshRef.current) {
       meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, mouse.y * 0.08, 0.05);
       meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, mouse.x * 0.08, 0.05);
@@ -102,37 +153,143 @@ const GlobalMercuryBackground = memo(() => {
 });
 GlobalMercuryBackground.displayName = "GlobalMercuryBackground";
 
-const BackgroundCanvas = memo(() => {
+const BackgroundCanvas = memo(({ active }: { active: boolean }) => {
   return (
-    /* تغییر شفافیت پیش‌فرض به opacity-0 برای شروع بدون فلاش رنگی */
     <div className="portfolio-webgl-bg hidden lg:block fixed inset-0 z-0 pointer-events-none opacity-0 will-change-transform">
       <Canvas 
         camera={{ position: [0, 0, 4] }} 
+        frameloop={active ? "always" : "never"}
         gl={{ 
           antialias: false, 
           powerPreference: "high-performance", 
           alpha: false,
           stencil: false,
-          depth: false
+          depth: false,
+          failIfMajorPerformanceCaveat: true
         }}
-        dpr={[1, 1.5]} 
+        dpr={1}
       >
-        <Environment preset="studio" />
+        <ambientLight intensity={1.2} />
+        <directionalLight position={[4, 4, 3]} intensity={2.5} color="#ffffff" />
+        <directionalLight position={[-4, -4, -3]} intensity={1.5} color="#555555" />
+        <pointLight position={[0, 0, 5]} intensity={1.0} />
         <GlobalMercuryBackground />
       </Canvas>
     </div>
   );
-});
+}, (prev, next) => prev.active === next.active);
 BackgroundCanvas.displayName = "BackgroundCanvas";
 
 export function PortfolioSection() {
   const [hasMounted, setHasMounted] = useState(false);
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const horizontalRef = useRef<HTMLDivElement>(null);
+  
+  const scrollTriggerRef = useRef<any>(null);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
+
+  const handleExploreProject = (project: Project, cardIndex: number, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+
+    const clickX = e.clientX;
+    const clickY = e.clientY;
+
+    window.dispatchEvent(new CustomEvent("project-explore"));
+
+    gsap.to(".desktop-card", {
+      scale: 1.3,
+      opacity: 0,
+      duration: 1.2,
+      ease: "power3.inOut"
+    });
+    
+    gsap.to([".circuit-bg-container", ".portfolio-webgl-bg"], {
+      opacity: 0,
+      duration: 0.6,
+      ease: "power2.out"
+    });
+
+    setActiveProject(project);
+
+    setTimeout(() => {
+      gsap.fromTo(".project-detail-container", 
+        { clipPath: `circle(0% at ${clickX}px ${clickY}px)` },
+        { 
+          clipPath: `circle(150% at ${clickX}px ${clickY}px)`, 
+          duration: 1.2, 
+          ease: "power3.inOut",
+          onComplete: () => {
+            const trigger = scrollTriggerRef.current;
+            if (trigger) {
+              const start = trigger.start;
+              const end = trigger.end;
+              const totalScroll = end - start;
+              const targetProgress = cardIndex / (PROJECTS.length - 1);
+              const targetScroll = start + totalScroll * targetProgress;
+              
+              window.scrollTo(0, targetScroll);
+              trigger.scroll(targetScroll);
+              trigger.update();
+            }
+            setIsTransitioning(false);
+          }
+        }
+      );
+    }, 20);
+  };
+
+  const handleBackToGrid = () => {
+    if (!activeProject || isTransitioning) return;
+    setIsTransitioning(true);
+
+    const currentProject = activeProject;
+    const cardIndex = PROJECTS.findIndex(p => p.id === currentProject.id);
+    const cardEl = document.querySelectorAll(".desktop-card")[cardIndex];
+    const btnEl = cardEl?.querySelector(".unique-btn");
+
+    let targetX = window.innerWidth / 2;
+    let targetY = window.innerHeight / 2;
+    if (btnEl) {
+      const btnRect = btnEl.getBoundingClientRect();
+      targetX = btnRect.left + btnRect.width / 2;
+      targetY = btnRect.top + btnRect.height / 2;
+    }
+
+    window.dispatchEvent(new CustomEvent("project-back"));
+
+    gsap.to(".project-detail-container", {
+      clipPath: `circle(0% at ${targetX}px ${targetY}px)`,
+      duration: 1.0,
+      ease: "power3.inOut",
+      onComplete: () => {
+        setActiveProject(null);
+        setIsTransitioning(false);
+      }
+    });
+
+    setTimeout(() => {
+      gsap.fromTo(".desktop-card", 
+        { scale: 1.3, opacity: 0 }, 
+        { scale: 1.0, opacity: 1, duration: 1.0, ease: "power3.out" }
+      );
+      gsap.fromTo(".circuit-bg-container", 
+        { opacity: 0 }, 
+        { opacity: 0.35, duration: 0.8, ease: "power2.out" }
+      );
+      gsap.fromTo(".portfolio-webgl-bg", 
+        { opacity: 0 }, 
+        { opacity: 0.4, duration: 0.8, ease: "power2.out" }
+      );
+    }, 50);
+  };
 
   useGSAP(() => {
     if (!hasMounted) return;
@@ -151,6 +308,9 @@ export function PortfolioSection() {
             start: "top 80%",
             end: "bottom 20%",
             toggleActions: "play reverse play reverse",
+            onToggle: (self) => {
+              setIsInView(self.isActive);
+            }
           }
         }
       );
@@ -194,6 +354,8 @@ export function PortfolioSection() {
           }
         }
       });
+
+      scrollTriggerRef.current = tl.scrollTrigger;
 
       cards.forEach((card, i) => {
         if (i === 0) return;
@@ -249,7 +411,11 @@ export function PortfolioSection() {
 
   return (
     <div ref={containerRef} className="portfolio-section-container relative w-full overflow-hidden bg-[#030303]">
-      {hasMounted && <BackgroundCanvas />}
+      {hasMounted && <BackgroundCanvas active={isInView && !activeProject} />}
+
+      {activeProject && (
+        <ProjectDetail project={activeProject} onBack={handleBackToGrid} />
+      )}
 
       <div className="hidden lg:block relative h-screen w-full">
         {PROJECTS.map((project, i) => (
@@ -305,7 +471,11 @@ export function PortfolioSection() {
                   {project.desc}
                 </p>
 
-                <button className="unique-btn group relative" style={{ '--accent-color': project.accent } as React.CSSProperties}>
+                <button 
+                  onClick={(e) => handleExploreProject(project, i, e)}
+                  className="unique-btn group relative" 
+                  style={{ '--accent-color': project.accent } as React.CSSProperties}
+                >
                   <span className="btn-content">
                     EXPLORE PROJECT
                     <svg className="w-5 h-5 mr-2 transform group-hover:translate-x-2 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -316,11 +486,7 @@ export function PortfolioSection() {
               </div>
 
               <div className="col-span-6 flex items-center justify-end p-6 perspective-1000 relative">
-                
                 <div className="img-portal relative w-[80%] aspect-[4/5] group transition-all duration-700 ease-out layer-optimized mt-16">
-                   
-
-
                    <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-transparent">
                       <img src={project.img} className="w-full h-full object-cover scale-105 group-hover:scale-100 group-hover:rotate-1 transition-all duration-[1.5s] ease-out filter brightness-[0.7] group-hover:brightness-100" alt={project.title} />
                    </div>
@@ -345,7 +511,18 @@ export function PortfolioSection() {
       </div>
 
       <style jsx>{`
-        /* استایل محو شدن کامل سکشن پورتفولیو موقع اسکرول ناوبری */
+        :global(.scrollbar-hide::-webkit-scrollbar) {
+          display: none !important;
+        }
+        :global(.scrollbar-hide) {
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
+        }
+        .container-optimized {
+          content-visibility: auto;
+          contain-intrinsic-size: 500px;
+        }
+
         .portfolio-webgl-bg,
         .circuit-bg-container,
         .desktop-card > .grid,

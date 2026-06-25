@@ -67,3 +67,10 @@ body::before {
   z-index: 100;
   pointer-events: none;
 }
+
+body.project-active { 
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}

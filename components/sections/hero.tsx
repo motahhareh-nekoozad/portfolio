@@ -8,13 +8,13 @@ export default function HeroSection() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [introFinished, setIntroFinished] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     let width = window.innerWidth;
     let height = window.innerHeight;
     
@@ -22,7 +22,7 @@ export default function HeroSection() {
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    const particleCount = 100; 
+    const particleCount = 80; 
     const targetDistance = 100;
     const targetDistanceSq = targetDistance * targetDistance; 
     const mouseLimit = 150;
@@ -31,6 +31,18 @@ export default function HeroSection() {
     let animationFrameId: number;
 
     const mouse = { x: width / 2, y: height / 2, tx: width / 2, ty: height / 2 };
+
+    let containerOffsetTop = 0;
+    let containerOffsetLeft = 0;
+
+    const calculateOffsets = () => {
+      if (!container.current) return;
+      const rect = container.current.getBoundingClientRect();
+      containerOffsetTop = rect.top + window.scrollY;
+      containerOffsetLeft = rect.left + window.scrollX;
+    };
+
+    calculateOffsets();
 
     class Particle {
       x: number;
@@ -65,9 +77,33 @@ export default function HeroSection() {
       particles.push(new Particle());
     }
 
+    let lastClientX = width / 2;
+    let lastClientY = height / 2;
+    let lastScrollY = window.scrollY;
+    let lastScrollX = window.scrollX;
+
+    const updateMousePosition = () => {
+      mouse.tx = lastClientX - containerOffsetLeft + window.scrollX;
+      mouse.ty = lastClientY - containerOffsetTop + window.scrollY;
+    };
+
     const onMouseMove = (e: MouseEvent) => {
-      mouse.tx = e.clientX;
-      mouse.ty = e.clientY;
+      lastClientX = e.clientX;
+      lastClientY = e.clientY;
+      updateMousePosition();
+    };
+
+    const onScroll = () => {
+      const dX = window.scrollX - lastScrollX;
+      const dY = window.scrollY - lastScrollY;
+      
+      lastScrollX = window.scrollX;
+      lastScrollY = window.scrollY;
+
+      mouse.x += dX;
+      mouse.y += dY;
+      
+      updateMousePosition();
     };
 
     let resizeTimeout: NodeJS.Timeout;
@@ -80,90 +116,139 @@ export default function HeroSection() {
         canvas.width = width * dpr;
         canvas.height = height * dpr;
         ctx.scale(dpr, dpr);
+        calculateOffsets();
+        updateMousePosition();
       }, 100);
     };
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
 
+    updateMousePosition();
+
     const nearMouseFlags = new Array(particleCount);
-    let p1: any, p2: any, mDx = 0, mDy = 0, mDistSq = 0, mDist = 0, alphaFactor = 0, dx = 0, dy = 0, distSq = 0, dist = 0, baseAlpha = 0;
 
-const animate = () => {
-  if (!ctx || !canvas) return;
-  
-  ctx.clearRect(0, 0, width, height);
+    const animate = () => {
+      if (!ctx || !canvas) return;
+      
+      ctx.clearRect(0, 0, width, height);
 
-  mouse.x += (mouse.tx - mouse.x) * 0.08;
-  mouse.y += (mouse.ty - mouse.y) * 0.08;
+      mouse.x += (mouse.tx - mouse.x) * 0.08;
+      mouse.y += (mouse.ty - mouse.y) * 0.08;
 
-  for (let i = 0; i < particles.length; i++) {
-    const p1 = particles[i];
-    p1.update();
-    
-    const dx = p1.x - mouse.x;
-    const dy = p1.y - mouse.y;
-    nearMouseFlags[i] = (dx * dx + dy * dy) < mouseLimitSq;
-  }
-
-  ctx.lineWidth = 0.5;
-  
-  for (let i = 0; i < particles.length; i++) {
-    const p1 = particles[i];
-    if (p1.isGlowOrb) continue;
-
-    if (nearMouseFlags[i]) {
-       ctx.beginPath();
-       ctx.strokeStyle = "rgba(56, 189, 248, 0.3)";
-       ctx.moveTo(p1.x, p1.y);
-       ctx.lineTo(mouse.x, mouse.y);
-       ctx.stroke();
-    }
-
-    for (let j = i + 1; j < particles.length; j++) {
-      const p2 = particles[j];
-      if (p2.isGlowOrb) continue;
-
-      const dx = p1.x - p2.x;
-      const dy = p1.y - p2.y;
-      const distSq = dx * dx + dy * dy;
-
-      if (distSq < targetDistanceSq) {
-        ctx.beginPath();
-        ctx.strokeStyle = (nearMouseFlags[i] || nearMouseFlags[j]) 
-          ? "rgba(56, 189, 248, 0.2)" 
-          : "rgba(255, 255, 255, 0.05)";
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
+      for (let i = 0; i < particles.length; i++) {
+        const p1 = particles[i];
+        p1.update();
+        
+        const dx = p1.x - mouse.x;
+        const dy = p1.y - mouse.y;
+        nearMouseFlags[i] = (dx * dx + dy * dy) < mouseLimitSq;
       }
-    }
-  }
 
-  ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
-  ctx.beginPath();
-  for (let i = 0; i < particles.length; i++) {
-    const p = particles[i];
-    if (!p.isGlowOrb) {
-      ctx.moveTo(p.x + p.radius, p.y);
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-    }
-  }
-  ctx.fill();
+      ctx.lineWidth = 0.5;
+      
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      for (let i = 0; i < particles.length; i++) {
+        const p1 = particles[i];
+        if (p1.isGlowOrb) continue;
 
-  animationFrameId = requestAnimationFrame(animate);
-};
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          if (p2.isGlowOrb) continue;
+
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const distSq = dx * dx + dy * dy;
+
+          if (distSq < targetDistanceSq && !nearMouseFlags[i] && !nearMouseFlags[j]) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+          }
+        }
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.25)";
+      for (let i = 0; i < particles.length; i++) {
+        const p1 = particles[i];
+        if (p1.isGlowOrb) continue;
+
+        if (nearMouseFlags[i]) {
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(mouse.x, mouse.y);
+        }
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          if (p2.isGlowOrb) continue;
+
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const distSq = dx * dx + dy * dy;
+
+          if (distSq < targetDistanceSq && (nearMouseFlags[i] || nearMouseFlags[j])) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+          }
+        }
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+      ctx.beginPath();
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        if (!p.isGlowOrb) {
+          ctx.moveTo(p.x + p.radius, p.y);
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        }
+      }
+      ctx.fill();
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    let isLoopRunning = false;
+
+    const startLoop = () => {
+      if (!isLoopRunning) {
+        isLoopRunning = true;
+        animate();
+      }
+    };
+
+    const stopLoop = () => {
+      if (isLoopRunning) {
+        isLoopRunning = false;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      }
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          startLoop();
+        } else {
+          stopLoop();
+        }
+      });
+    }, { threshold: 0.01 });
 
     const startTimeout = setTimeout(() => {
-      animate();
+      observer.observe(canvas);
     }, 350);
 
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
+      observer.disconnect();
       clearTimeout(resizeTimeout);
       clearTimeout(startTimeout);
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      stopLoop();
     };
   }, []);
 
