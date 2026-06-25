@@ -124,10 +124,13 @@ const GlobalMercuryBackground = memo(() => {
 
   useFrame((state) => {
     const { clock, mouse, camera } = state;
+    
+    // کست کردن به PerspectiveCamera برای دسترسی امن تایپ‌اسکریپت به fov و متدها
+    const pCamera = camera as THREE.PerspectiveCamera;
 
-    camera.position.z = THREE.MathUtils.lerp(4, -1.2, zoomObj.value);
-    camera.fov = THREE.MathUtils.lerp(50, 105, zoomObj.value);
-    camera.updateProjectionMatrix();
+    pCamera.position.z = THREE.MathUtils.lerp(4, -1.2, zoomObj.value);
+    pCamera.fov = THREE.MathUtils.lerp(50, 105, zoomObj.value);
+    pCamera.updateProjectionMatrix();
 
     if (meshRef.current) {
       meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, mouse.y * 0.08, 0.05);
