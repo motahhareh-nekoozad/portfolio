@@ -147,10 +147,10 @@ export default function ContactSection() {
           <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-purple-400/50 rounded-bl-xl pointer-events-none" />
           <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-400/50 rounded-br-xl pointer-events-none" />
 
-          <div className="absolute top-5 right-5 flex items-center gap-2">
+          {/* <div className="absolute top-5 right-5 flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
             <span className="text-[9px] font-mono tracking-widest text-cyan-400/90 font-bold">LINK STABLE</span>
-          </div>
+          </div> */}
 
           <div className="mb-10 mt-2 relative z-10">
             <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none mb-3">
@@ -290,11 +290,11 @@ export default function ContactSection() {
               </svg>
             </div>
             <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-1">
+              {/* <div className="flex items-center gap-2 mb-1">
                 <span className="text-[10px] font-mono tracking-widest text-white/60 uppercase">QUANTUM FREQUENCY</span>
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10b981]" />
                 <span className="text-[8px] font-mono text-[#10b981] animate-pulse">ONLINE</span>
-              </div>
+              </div> */}
               <p className="text-sm font-semibold tracking-wider text-white group-hover/card:text-cyan-400 transition-colors duration-300">@nextgen_agency</p>
             </div>
           </div>
@@ -314,11 +314,11 @@ export default function ContactSection() {
               </svg>
             </div>
             <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-1">
+              {/* <div className="flex items-center gap-2 mb-1">
                 <span className="text-[10px] font-mono tracking-widest text-white/60 uppercase">SECURE COMM CHANNEL</span>
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10b981]" />
                 <span className="text-[8px] font-mono text-[#10b981]">SECURED</span>
-              </div>
+              </div> */}
               <p className="text-sm font-semibold tracking-wider text-white group-hover/card:text-purple-400 transition-colors duration-300">uplink@agency.next</p>
             </div>
           </div>

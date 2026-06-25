@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import SmoothScroll from "@/components/smooth-scroll";
-import {LiquidBackground} from "@/components/liquid-background";
-import CustomCursor from "@/hooks/custom-cursor"
 
+import "@/lib/gsap-setup"; 
+
+import SmoothScroll from "@/components/smooth-scroll";
+import { LiquidBackground } from "@/components/liquid-background";
+import CustomCursor from "@/hooks/custom-cursor";
+import Navbar from "@/components/navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,16 +29,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  if (typeof window !== 'undefined') {
+    window.history.scrollRestoration = 'manual';
+  }
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <CustomCursor />
-        <LiquidBackground />
-        <SmoothScroll>{children}</SmoothScroll>
-      </body>
+    <body className="min-h-full flex flex-col">
+      <div id="scroll-cover" className="fixed inset-0 z-[9999] bg-[#030303] opacity-0 pointer-events-none transition-opacity duration-300" />
+      <CustomCursor />
+      <SmoothScroll>
+        <Navbar />
+        {children}
+      </SmoothScroll>
+    </body>
     </html>
   );
 }

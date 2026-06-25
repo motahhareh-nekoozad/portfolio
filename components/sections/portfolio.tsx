@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect, useState, memo } from "react";
+import React, { useRef, useEffect, useState, memo, useMemo } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -10,46 +10,77 @@ import * as THREE from "three";
 gsap.registerPlugin(ScrollTrigger);
 
 const PROJECTS = [
-  { 
-    id: "01", title: "NEXUS BEYOND", color: "#050b14", accent: "#38bdf8", 
+  {
+    id: "01",
+    title: "NEXUS BEYOND",
+    color: "#0a0303",
+    accent: "#ef4444", 
     desc: "آینده‌نگری در طراحی رابط کاربری با تمرکز بر تعاملات سه بعدی و سرعت رندرینگ فوق‌العاده.",
-    img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564" 
+    img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564"
   },
-  { 
-    id: "02", title: "CYBER PULSE", color: "#0d0d0d", accent: "#c084fc", 
+  {
+    id: "02",
+    title: "CYBER PULSE",
+    color: "#030712",
+    accent: "#3b82f6", 
     desc: "سیستم مانیتورینگ هوشمند برای دیتاسنترهای نسل جدید با پالت رنگی نئون.",
-    img: "https://images.unsplash.com/photo-1633167606207-d840b5070fc2?q=80&w=2564" 
+    img: "https://images.unsplash.com/photo-1633167606207-d840b5070fc2?q=80&w=2564"
   },
-  { 
-    id: "03", title: "LIQUID MIND", accent: "#34d399", color: "#050505",
+  {
+    id: "03",
+    title: "LIQUID MIND",
+    color: "#03140d",
+    accent: "#10b981", 
     desc: "تجربه‌ای فراتر از واقعیت در دنیای دیجیتال با هوش مصنوعی.",
-    img: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2564" 
+    img: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2564"
   },
+  {
+    id: "04",
+    title: "SOLARIS WAVE",
+    color: "#140c03",
+    accent: "#f59e0b", 
+    desc: "شبکه‌های هوشمند نسل جدید مبتنی بر بلاکچین برای مدیریت توزیع انرژی پاک.",
+    img: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2564"
+  }
 ];
 
-const GlobalMercuryBackground = memo(({ activeIndex }: { activeIndex: number }) => {
+const GlobalMercuryBackground = memo(() => {
   const meshRef = useRef<THREE.Mesh>(null!);
   const materialRef = useRef<any>(null!);
   const { viewport } = useThree();
+  const lastIndexRef = useRef(0);
+
+  const projectColors = useMemo(() => PROJECTS.map(p => new THREE.Color(p.accent)), []);
 
   useEffect(() => {
-    if (materialRef.current) {
-      const targetColor = new THREE.Color(PROJECTS[activeIndex].accent);
-      gsap.to(materialRef.current.color, {
-        r: targetColor.r * 0.05, 
-        g: targetColor.g * 0.05,
-        b: targetColor.b * 0.05,
-        duration: 1,
-        ease: "power2.out"
-      });
-    }
-  }, [activeIndex]);
+    const handleProjectChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const index = customEvent.detail.index;
+      
+      if (index === lastIndexRef.current) return;
+      lastIndexRef.current = index;
+
+      if (materialRef.current) {
+        const targetColor = projectColors[index];
+        gsap.to(materialRef.current.color, {
+          r: targetColor.r * 0.05,
+          g: targetColor.g * 0.05,
+          b: targetColor.b * 0.05,
+          duration: 0.8,
+          ease: "power2.out"
+        });
+      }
+    };
+
+    window.addEventListener("project-change", handleProjectChange);
+    return () => window.removeEventListener("project-change", handleProjectChange);
+  }, [projectColors]);
 
   useFrame((state) => {
     const { clock, mouse } = state;
     if (meshRef.current) {
-      meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, mouse.y * 0.1, 0.05);
-      meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, mouse.x * 0.1, 0.05);
+      meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, mouse.y * 0.08, 0.05);
+      meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, mouse.x * 0.08, 0.05);
     }
     if (materialRef.current) {
       materialRef.current.distort = 0.3 + Math.sin(clock.getElapsedTime() * 0.3) * 0.05;
@@ -57,28 +88,50 @@ const GlobalMercuryBackground = memo(({ activeIndex }: { activeIndex: number }) 
   });
 
   return (
-    <Plane args={[viewport.width * 2, viewport.height * 2, 16, 16]} ref={meshRef}>
-      <MeshDistortMaterial 
+    <Plane args={[viewport.width * 2, viewport.height * 2, 8, 8]} ref={meshRef}>
+      <MeshDistortMaterial
         ref={materialRef}
-        color="#030303" 
-        metalness={0.95} 
-        roughness={0.15} 
-        distort={0.3} 
-        speed={1.2} 
+        speed={1}
+        distort={0.3}
+        color={projectColors[0].clone().multiplyScalar(0.05)}
+        roughness={0.2}
+        metalness={0.8}
       />
     </Plane>
   );
 });
 GlobalMercuryBackground.displayName = "GlobalMercuryBackground";
 
+const BackgroundCanvas = memo(() => {
+  return (
+    /* تغییر شفافیت پیش‌فرض به opacity-0 برای شروع بدون فلاش رنگی */
+    <div className="portfolio-webgl-bg hidden lg:block fixed inset-0 z-0 pointer-events-none opacity-0 will-change-transform">
+      <Canvas 
+        camera={{ position: [0, 0, 4] }} 
+        gl={{ 
+          antialias: false, 
+          powerPreference: "high-performance", 
+          alpha: false,
+          stencil: false,
+          depth: false
+        }}
+        dpr={[1, 1.5]} 
+      >
+        <Environment preset="studio" />
+        <GlobalMercuryBackground />
+      </Canvas>
+    </div>
+  );
+});
+BackgroundCanvas.displayName = "BackgroundCanvas";
+
 export function PortfolioSection() {
   const [hasMounted, setHasMounted] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const horizontalRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { 
-    setHasMounted(true); 
+  useEffect(() => {
+    setHasMounted(true);
   }, []);
 
   useGSAP(() => {
@@ -87,6 +140,21 @@ export function PortfolioSection() {
     let mm = gsap.matchMedia();
 
     mm.add("(min-width: 1024px)", () => {
+      gsap.fromTo(".portfolio-webgl-bg", 
+        { opacity: 0 }, 
+        {
+          opacity: 0.4,
+          duration: 0.6,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top 80%",
+            end: "bottom 20%",
+            toggleActions: "play reverse play reverse",
+          }
+        }
+      );
+
       const cards = gsap.utils.toArray<HTMLElement>(".desktop-card");
       
       const firstCard = cards[0];
@@ -100,14 +168,19 @@ export function PortfolioSection() {
         gsap.fromTo(firstCircuit, { opacity: 0 }, { opacity: 0.35, duration: 2, ease: "power3.out" });
       }
 
+      gsap.set(cards.slice(1), { visibility: "hidden" });
+
       let lastIndex = 0;
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: `+=${PROJECTS.length * 150}%`,
+          end: `+=${PROJECTS.length * 105}%`, 
           pin: true,
-          scrub: 1,
+          scrub: 0.5, 
+          invalidateOnRefresh: true, 
+          anticipatePin: 1,          
+          refreshPriority: 10,
           onUpdate: (self) => {
             const progress = self.progress;
             const index = Math.min(
@@ -116,7 +189,7 @@ export function PortfolioSection() {
             );
             if (index !== lastIndex) {
               lastIndex = index;
-              setActiveIndex(index);
+              window.dispatchEvent(new CustomEvent("project-change", { detail: { index } }));
             }
           }
         }
@@ -126,29 +199,27 @@ export function PortfolioSection() {
         if (i === 0) return;
 
         const positionInTimeline = (i - 1) * 3; 
+        const isBottomToTop = i % 2 == 0; 
 
-        tl.fromTo(card, 
-          { 
-            yPercent: 120, 
-            clipPath: "polygon(0 10%, 100% 0%, 100% 100%, 0% 100%)",
-            opacity: 1 
-          }, 
-          { 
-            yPercent: 0, 
-            clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
-            ease: "power2.inOut", 
-            duration: 3 
-          }, 
-          positionInTimeline
-        );
+        tl.set(card, { visibility: "visible" }, positionInTimeline);
 
-        tl.to(cards[i - 1], {
-          scale: 0.93,
-          opacity: 0, 
-          yPercent: -15,
-          duration: 3,
-          ease: "power2.inOut"
-        }, positionInTimeline);
+        if (isBottomToTop) {
+          tl.fromTo(card, 
+            { yPercent: 120, clipPath: "polygon(0 10%, 100% 0%, 100% 100%, 0% 100%)" }, 
+            { yPercent: 0, clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)", ease: "power2.inOut", duration: 3, force3D: true }, 
+            positionInTimeline
+          );
+          tl.to(cards[i - 1], { scale: 0.93, opacity: 0, yPercent: -15, duration: 3, ease: "power2.inOut", force3D: true }, positionInTimeline);
+        } else {
+          tl.fromTo(card, 
+            { xPercent: -100, clipPath: "polygon(10% 0%, 100% 0%, 100% 100%, 0% 100%)" }, 
+            { xPercent: 0, clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)", ease: "power2.inOut", duration: 3, force3D: true }, 
+            positionInTimeline
+          );
+          tl.to(cards[i - 1], { scale: 0.93, opacity: 0, xPercent: 15, duration: 3, ease: "power2.inOut", force3D: true }, positionInTimeline);
+        }
+
+        tl.set(cards[i - 1], { visibility: "hidden" }, positionInTimeline + 3);
 
         const info = card.querySelector(".info-inner");
         const imgPortal = card.querySelector(".img-portal");
@@ -164,7 +235,12 @@ export function PortfolioSection() {
       gsap.to(horizontalRef.current, {
         x: () => -(horizontalRef.current!.scrollWidth - window.innerWidth),
         ease: "none",
-        scrollTrigger: { trigger: containerRef.current, pin: true, scrub: 1, end: () => `+=${horizontalRef.current!.scrollWidth}` }
+        scrollTrigger: { 
+          trigger: containerRef.current, 
+          pin: true, 
+          scrub: 0.5, 
+          end: () => `+=${horizontalRef.current!.scrollWidth}` 
+        }
       });
     });
 
@@ -172,16 +248,8 @@ export function PortfolioSection() {
   }, [hasMounted]);
 
   return (
-    <section id="portfolio"  ref={containerRef} suppressHydrationWarning className="relative w-full bg-[#030303] overflow-hidden text-white font-sans h-screen select-none">
-
-      {hasMounted && (
-        <div className="hidden lg:block fixed inset-0 z-0 pointer-events-none opacity-40 will-change-transform">
-          <Canvas camera={{ position: [0, 0, 4] }} gl={{ antialias: false, powerPreference: "high-performance", alpha: false }}>
-            <Environment preset="studio" />
-            <GlobalMercuryBackground activeIndex={activeIndex} />
-          </Canvas>
-        </div>
-      )}
+    <div ref={containerRef} className="portfolio-section-container relative w-full overflow-hidden bg-[#030303]">
+      {hasMounted && <BackgroundCanvas />}
 
       <div className="hidden lg:block relative h-screen w-full">
         {PROJECTS.map((project, i) => (
@@ -247,12 +315,14 @@ export function PortfolioSection() {
                 </button>
               </div>
 
-              <div className="col-span-6 flex items-center justify-end p-6 perspective-1000">
-                <div className="img-portal relative w-[80%] aspect-[4/5] group transition-all duration-700 ease-out layer-optimized">
-                   <div className="absolute -inset-1 bg-gradient-to-r from-transparent to-white/10 rounded-[2.5rem] blur-xl opacity-30 group-hover:opacity-60 transition-opacity duration-700" />
-                   <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.9)] bg-zinc-900">
-                      <img src={project.img} className="w-full h-full object-cover scale-105 group-hover:scale-100 group-hover:rotate-1 transition-all duration-[1.5s] ease-out filter brightness-70 group-hover:brightness-100" alt={project.title} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-transparent opacity-70" />
+              <div className="col-span-6 flex items-center justify-end p-6 perspective-1000 relative">
+                
+                <div className="img-portal relative w-[80%] aspect-[4/5] group transition-all duration-700 ease-out layer-optimized mt-16">
+                   
+
+
+                   <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-transparent">
+                      <img src={project.img} className="w-full h-full object-cover scale-105 group-hover:scale-100 group-hover:rotate-1 transition-all duration-[1.5s] ease-out filter brightness-[0.7] group-hover:brightness-100" alt={project.title} />
                    </div>
                 </div>
               </div>
@@ -263,7 +333,7 @@ export function PortfolioSection() {
 
       <div ref={horizontalRef} className="flex lg:hidden h-screen items-center px-6 gap-6 w-max relative z-10 layer-optimized">
         {PROJECTS.map((project) => (
-          <div key={project.id} className="mobile-card w-[85vw] h-[70vh] shrink-0 rounded-[2.5rem] overflow-hidden border border-white/10 relative shadow-2xl">
+          <div key={project.id} className="mobile-card w-[85vw] h-[70vh] shrink-0 rounded-[2.5rem] overflow-hidden border border-white/10 relative">
             <img src={project.img} className="absolute inset-0 w-full h-full object-cover opacity-40" alt={project.title} />
             <div className="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-black via-black/40 to-transparent">
               <span className="text-xs font-mono tracking-widest text-white/40 mb-2">{project.id} / PROJECT</span>
@@ -275,9 +345,39 @@ export function PortfolioSection() {
       </div>
 
       <style jsx>{`
+        /* استایل محو شدن کامل سکشن پورتفولیو موقع اسکرول ناوبری */
+        .portfolio-webgl-bg,
+        .circuit-bg-container,
+        .desktop-card > .grid,
+        .mobile-card {
+          transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
+        }
+
+        :global(body.is-nav-scrolling) .portfolio-webgl-bg,
+        :global(body.is-nav-scrolling) .circuit-bg-container,
+        :global(body.is-nav-scrolling) .desktop-card > .grid,
+        :global(body.is-nav-scrolling) .mobile-card {
+          opacity: 0 !important;
+          visibility: hidden !important;
+          transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
         .layer-optimized {
           will-change: transform;
-          contain: paint;
+          transform: translateZ(0);
+          backface-visibility: hidden;
+        }
+        .desktop-card {
+          backface-visibility: hidden;
+          transform-style: preserve-3d;
+          will-change: transform;
+        }
+
+        .circuit-bg-container svg {
+          transform: translateZ(0);
+        }
+        .pulse-line, .circuit-dot {
+          transform: translateZ(0);
         }
         .shine-effect {
           background: linear-gradient(90deg, #fff 0%, #555 25%, #fff 50%, #555 75%, #fff 100%);
@@ -292,8 +392,7 @@ export function PortfolioSection() {
         .pulse-line {
           stroke-dashoffset: 0;
           animation: circuitFlow 7s linear infinite;
-          filter: drop-shadow(0 0 10px var(--accent-color)) drop-shadow(0 0 3px var(--accent-color));
-          opacity: 0.85;
+          opacity: 0.6;
           will-change: stroke-dashoffset;
         }
 
@@ -315,7 +414,6 @@ export function PortfolioSection() {
 
         .circuit-dot {
           animation: dotPulse 1.5s ease-in-out infinite alternate;
-          filter: drop-shadow(0 0 5px var(--accent-color));
           will-change: opacity, r;
         }
         .dot-delay { animation-delay: -0.75s; }
@@ -334,6 +432,7 @@ export function PortfolioSection() {
           background: rgba(255, 255, 255, 0.03);
           transition: all 0.4s ease;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+          will-change: transform;
         }
         .unique-btn::before {
           content: '';
@@ -376,6 +475,6 @@ export function PortfolioSection() {
           animation: none;
         }
       `}</style>
-    </section>
+    </div>
   );
 }

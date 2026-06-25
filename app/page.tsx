@@ -16,9 +16,7 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen">
-      <Navbar />
       <div className="noise-overlay" /> 
-      <LiquidBackground /> 
       <CustomCursor /> 
       
       <ScrollSpy sections={activeSections} />

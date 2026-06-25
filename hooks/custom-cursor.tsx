@@ -2,6 +2,8 @@
 import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 
+const RAD_TO_DEG = 180 / Math.PI;
+
 export default function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
   
@@ -10,7 +12,9 @@ export default function CustomCursor() {
     vel: { x: 0, y: 0 },
     mouse: { x: 0, y: 0 },
     hoverScale: 1, 
-    isHovered: false
+    isHovered: false,
+    revealProgress: 0, 
+    hasMoved: false
   });
 
   useEffect(() => {
@@ -18,80 +22,116 @@ export default function CustomCursor() {
     if (!cursor) return;
 
     document.body.style.cursor = "none";
-    gsap.set(cursor, { xPercent: -50, yPercent: -50, scale: 0, opacity: 0 });
+    gsap.set(cursor, { opacity: 0 });
 
     const current = state.current;
+    let isTicking = false;
+    let lastTarget: EventTarget | null = null;
+
+    const updateCursor = () => {
+      const dt = 0.15; 
+      
+      const { mouse, pos, vel } = current;
+
+      const dx = mouse.x - pos.x;
+      const dy = mouse.y - pos.y;
+
+      const isHoverTweenActive = gsap.isTweening(current);
+      if (
+        Math.abs(dx) < 0.05 && 
+        Math.abs(dy) < 0.05 && 
+        current.revealProgress === 1 && 
+        !isHoverTweenActive
+      ) {
+        pos.x = mouse.x;
+        pos.y = mouse.y;
+        vel.x = 0;
+        vel.y = 0;
+
+        const scaleX = current.hoverScale;
+        const scaleY = current.hoverScale;
+        cursor.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%) rotate(0deg) scale(${scaleX}, ${scaleY})`;
+        
+        gsap.ticker.remove(updateCursor);
+        isTicking = false;
+        return;
+      }
+
+      pos.x += dx * dt;
+      pos.y += dy * dt;
+
+      vel.x = mouse.x - pos.x;
+      vel.y = mouse.y - pos.y;
+      
+      const speedSq = vel.x * vel.x + vel.y * vel.y;
+      const speed = Math.min(speedSq * 0.00003, 0.6); 
+
+      const scaleX = (1 + speed) * current.hoverScale * current.revealProgress;
+      const scaleY = (1 - speed * 0.5) * current.hoverScale * current.revealProgress;
+      
+      const angle = Math.atan2(vel.y, vel.x) * RAD_TO_DEG;
+
+      cursor.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%) rotate(${angle}deg) scale(${scaleX}, ${scaleY})`;
+    };
+
+    const wakeTicker = () => {
+      if (!isTicking) {
+        isTicking = true;
+        gsap.ticker.add(updateCursor);
+      }
+    };
 
     const onMouseMove = (e: MouseEvent) => {
       current.mouse.x = e.clientX;
       current.mouse.y = e.clientY;
-      if (gsap.getProperty(cursor, "opacity") === 0) {
-        gsap.to(cursor, { opacity: 1, scale: 1, duration: 0.3, overwrite: "auto" });
+      
+      if (!current.hasMoved) {
+        current.hasMoved = true;
+        gsap.to(current, {
+          revealProgress: 1,
+          duration: 0.4,
+          ease: "power2.out",
+          onUpdate: wakeTicker
+        });
+        gsap.to(cursor, { opacity: 1, duration: 0.3, overwrite: "auto" });
       }
+
+      if (e.target !== lastTarget) {
+        lastTarget = e.target;
+        const target = (e.target as HTMLElement).closest?.("button, a, .interactive");
+        const shouldHover = !!target;
+        
+        if (shouldHover !== current.isHovered) {
+          current.isHovered = shouldHover;
+          if (shouldHover) {
+            cursor.classList.add("cursor-hover-active");
+            gsap.to(current, {
+              hoverScale: 1.8, 
+              duration: 0.25,
+              overwrite: "auto",
+              onUpdate: wakeTicker
+            });
+          } else {
+            cursor.classList.remove("cursor-hover-active");
+            gsap.to(current, {
+              hoverScale: 1,
+              duration: 0.25,
+              overwrite: "auto",
+              onUpdate: wakeTicker
+            });
+          }
+        }
+      }
+
+      wakeTicker();
     };
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
-
-    const updateCursor = () => {
-      const dt = 0.15; 
-      current.pos.x += (current.mouse.x - current.pos.x) * dt;
-      current.pos.y += (current.mouse.y - current.pos.y) * dt;
-
-      current.vel.x = current.mouse.x - current.pos.x;
-      current.vel.y = current.mouse.y - current.pos.y;
-      
-      const speedSq = current.vel.x * current.vel.x + current.vel.y * current.vel.y;
-      const speed = Math.min(speedSq * 0.00003, 0.6); 
-
-      const scaleX = (1 + speed) * current.hoverScale;
-      const scaleY = (1 - speed * 0.5) * current.hoverScale;
-      const angle = Math.atan2(current.vel.y, current.vel.x) * (180 / Math.PI);
-
-      gsap.set(cursor, {
-        x: current.pos.x,
-        y: current.pos.y,
-        rotation: angle,
-        scaleX: scaleX,
-        scaleY: scaleY,
-      });
-    };
-
-    gsap.ticker.add(updateCursor);
-
-    const onMouseEnter = () => {
-      current.isHovered = true;
-      cursor.classList.add("cursor-hover-active");
-      gsap.to(current, {
-        hoverScale: 1.8, 
-        duration: 0.25,
-        overwrite: "auto"
-      });
-    };
-
-    const onMouseLeave = () => {
-      current.isHovered = false;
-      cursor.classList.remove("cursor-hover-active");
-      gsap.to(current, {
-        hoverScale: 1,
-        duration: 0.25,
-        overwrite: "auto"
-      });
-    };
-
-    const interactiveElements = document.querySelectorAll("button, a, .interactive");
-    interactiveElements.forEach((el) => {
-      el.addEventListener("mouseenter", onMouseEnter);
-      el.addEventListener("mouseleave", onMouseLeave);
-    });
 
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
       gsap.ticker.remove(updateCursor);
       document.body.style.cursor = "auto";
-      interactiveElements.forEach((el) => {
-        el.removeEventListener("mouseenter", onMouseEnter);
-        el.removeEventListener("mouseleave", onMouseLeave);
-      });
     };
   }, []);
 
@@ -111,6 +151,7 @@ export default function CustomCursor() {
           background: linear-gradient(135deg, #ffffff 0%, #a5f3fc 50%, #38bdf8 100%);
           box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
           transition: background 0.3s, box-shadow 0.3s, filter 0.3s;
+          transform: translate3d(0, 0, 0) translate(-50%, -50%) scale(0);
         }
 
         .custom-mercury-cursor.cursor-hover-active {
