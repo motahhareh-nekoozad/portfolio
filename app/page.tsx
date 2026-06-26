@@ -6,6 +6,7 @@ import CustomCursor from '@/hooks/custom-cursor';
 import ScrollSpy from '@/components/scroll-spy';
 import ContactSection from '@/components/sections/contactus';
 import AboutSection from '@/components/sections/aboutus';
+import ContactFloatButton from '@/components/contact-float-button';
 
 export default function Home() {
   const activeSections = [
@@ -21,6 +22,9 @@ export default function Home() {
       <CustomCursor /> 
       
       <ScrollSpy sections={activeSections} />
+          <Navbar />
+
+          <ContactFloatButton/>
 
       <div className="relative z-10">
         <HeroSection />
