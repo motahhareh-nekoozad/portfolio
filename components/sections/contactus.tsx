@@ -242,7 +242,7 @@ export default function ContactSection() {
 
         <div className="lg:col-span-6 flex flex-col gap-8">
           
-          <div className="reveal-contact-item hidden md:flex relative w-full aspect-[2/1] items-center justify-center rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-[#0e0c1f]/50 to-[#030305]/80 p-6 overflow-hidden shadow-2xl group/hub">
+          {/* <div className="reveal-contact-item hidden md:flex relative w-full aspect-[2/1] items-center justify-center rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-[#0e0c1f]/50 to-[#030305]/80 p-6 overflow-hidden shadow-2xl group/hub">
             <div className="absolute inset-0 cyber-grid opacity-15 pointer-events-none" />
             
             <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-32 bg-gradient-to-t from-cyan-500/10 to-transparent blur-2xl pointer-events-none group-hover/hub:from-purple-500/15 transition-all duration-700 ${isTyping ? "from-pink-500/20" : ""}`} />
@@ -273,7 +273,7 @@ export default function ContactSection() {
                 <circle cx="350" cy="100" r="3" fill="#c084fc" />
               </svg>
             </div>
-          </div>
+          </div> */}
 
           <div 
             onMouseMove={handleMouseMove}
