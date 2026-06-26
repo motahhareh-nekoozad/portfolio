@@ -70,6 +70,7 @@ const GlobalMercuryBackground = memo(() => {
   const materialRef = useRef<any>(null!);
   const { viewport } = useThree();
   const lastIndexRef = useRef(0);
+  const lastZoomValRef = useRef(-1);
 
   const projectColors = useMemo(() => PROJECTS.map(p => new THREE.Color(p.accent)), []);
   
@@ -127,9 +128,13 @@ const GlobalMercuryBackground = memo(() => {
     
     const pCamera = camera as THREE.PerspectiveCamera;
 
-    pCamera.position.z = THREE.MathUtils.lerp(4, -1.2, zoomObj.value);
-    pCamera.fov = THREE.MathUtils.lerp(50, 105, zoomObj.value);
-    pCamera.updateProjectionMatrix();
+    const currentZoom = zoomObj.value;
+    if (Math.abs(currentZoom - lastZoomValRef.current) > 0.0001) {
+      pCamera.position.z = THREE.MathUtils.lerp(4, -1.2, currentZoom);
+      pCamera.fov = THREE.MathUtils.lerp(50, 105, currentZoom);
+      pCamera.updateProjectionMatrix();
+      lastZoomValRef.current = currentZoom;
+    }
 
     if (meshRef.current) {
       meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, mouse.y * 0.08, 0.05);
@@ -204,48 +209,94 @@ export function PortfolioSection() {
     const clickX = e.clientX;
     const clickY = e.clientY;
 
-    window.dispatchEvent(new CustomEvent("project-explore"));
+    const cardEl = document.querySelectorAll(".desktop-card")[cardIndex];
+    const infoInner = cardEl?.querySelector(".info-inner");
+    const imgPortal = cardEl?.querySelector(".img-portal");
 
-    gsap.to(".desktop-card", {
-      scale: 1.3,
-      opacity: 0,
-      duration: 1.2,
-      ease: "power3.inOut"
-    });
-    
-    gsap.to([".circuit-bg-container", ".portfolio-webgl-bg"], {
-      opacity: 0,
-      duration: 0.6,
-      ease: "power2.out"
-    });
+    const lampContainer = cardEl?.querySelector(".lamp-container");
+    const lightCone = cardEl?.querySelector(".light-cone");
+    const imageGlowOverlay = cardEl?.querySelector(".image-glow-overlay");
+    const projectImg = cardEl?.querySelector(".project-img");
 
-    setActiveProject(project);
+    const lampTimeline = gsap.timeline({
+      onComplete: () => {
+        window.dispatchEvent(new CustomEvent("project-explore"));
 
-    setTimeout(() => {
-      gsap.fromTo(".project-detail-container", 
-        { clipPath: `circle(0% at ${clickX}px ${clickY}px)` },
-        { 
-          clipPath: `circle(150% at ${clickX}px ${clickY}px)`, 
-          duration: 1.2, 
-          ease: "power3.inOut",
-          onComplete: () => {
-            const trigger = scrollTriggerRef.current;
-            if (trigger) {
-              const start = trigger.start;
-              const end = trigger.end;
-              const totalScroll = end - start;
-              const targetProgress = cardIndex / (PROJECTS.length - 1);
-              const targetScroll = start + totalScroll * targetProgress;
-              
-              window.scrollTo(0, targetScroll);
-              trigger.scroll(targetScroll);
-              trigger.update();
-            }
-            setIsTransitioning(false);
-          }
+        if (infoInner) {
+          gsap.to(infoInner, {
+            xPercent: -40,
+            opacity: 0,
+            duration: 1.0,
+            ease: "power3.inOut"
+          });
         }
-      );
-    }, 20);
+
+        if (imgPortal) {
+          gsap.to(imgPortal, {
+            scale: 3.5,
+            rotateY: 15,
+            z: 300,
+            opacity: 0,
+            duration: 1.2,
+            ease: "power3.inOut"
+          });
+        }
+        
+        gsap.to([".circuit-bg-container", ".portfolio-webgl-bg"], {
+          opacity: 0,
+          duration: 0.6,
+          ease: "power2.out"
+        });
+
+        setActiveProject(project);
+
+        setTimeout(() => {
+          gsap.fromTo(".project-detail-container", 
+            { 
+              scale: 0.35, 
+              opacity: 0,
+              filter: "blur(25px)",
+              transformOrigin: "center center"
+            },
+            { 
+              scale: 1.0, 
+              opacity: 1, 
+              filter: "blur(0px)",
+              duration: 1.3, 
+              ease: "power4.out",
+              onComplete: () => {
+                const trigger = scrollTriggerRef.current;
+                if (trigger) {
+                  const start = trigger.start;
+                  const end = trigger.end;
+                  const totalScroll = end - start;
+                  const targetProgress = cardIndex / (PROJECTS.length - 1);
+                  const targetScroll = start + totalScroll * targetProgress;
+                  
+                  window.scrollTo(0, targetScroll);
+                  trigger.scroll(targetScroll);
+                  trigger.update();
+                }
+                setIsTransitioning(false);
+              }
+            }
+          );
+        }, 30);
+      }
+    });
+
+    if (lampContainer && lightCone && imageGlowOverlay && projectImg) {
+      lampTimeline
+        .to(lampContainer, { opacity: 1, duration: 0.1 })
+        .to(lightCone, { opacity: 0.8, scaleY: 1.1, duration: 0.08, ease: "rough" })
+        .to(lightCone, { opacity: 0.2, scaleY: 0.9, duration: 0.05 })
+        .to(lightCone, { opacity: 1, scaleY: 1.0, duration: 0.12 })
+        .to(imageGlowOverlay, { opacity: 1, duration: 0.2 }, "<")
+        .to(projectImg, { filter: "brightness(1.15) contrast(1.05)", duration: 0.2 }, "<")
+        .to({}, { duration: 0.4 });
+    } else {
+      lampTimeline.to({}, { duration: 0.1 });
+    }
   };
 
   const handleBackToGrid = () => {
@@ -255,21 +306,16 @@ export function PortfolioSection() {
     const currentProject = activeProject;
     const cardIndex = PROJECTS.findIndex(p => p.id === currentProject.id);
     const cardEl = document.querySelectorAll(".desktop-card")[cardIndex];
-    const btnEl = cardEl?.querySelector(".unique-btn");
-
-    let targetX = window.innerWidth / 2;
-    let targetY = window.innerHeight / 2;
-    if (btnEl) {
-      const btnRect = btnEl.getBoundingClientRect();
-      targetX = btnRect.left + btnRect.width / 2;
-      targetY = btnRect.top + btnRect.height / 2;
-    }
+    const infoInner = cardEl?.querySelector(".info-inner");
+    const imgPortal = cardEl?.querySelector(".img-portal");
 
     window.dispatchEvent(new CustomEvent("project-back"));
 
     gsap.to(".project-detail-container", {
-      clipPath: `circle(0% at ${targetX}px ${targetY}px)`,
-      duration: 1.0,
+      scale: 1.4,
+      opacity: 0,
+      filter: "blur(20px)",
+      duration: 1.1,
       ease: "power3.inOut",
       onComplete: () => {
         setActiveProject(null);
@@ -278,10 +324,50 @@ export function PortfolioSection() {
     });
 
     setTimeout(() => {
-      gsap.fromTo(".desktop-card", 
-        { scale: 1.3, opacity: 0 }, 
-        { scale: 1.0, opacity: 1, duration: 1.0, ease: "power3.out" }
-      );
+      if (imgPortal) {
+        gsap.fromTo(imgPortal, 
+          { scale: 3.5, rotateY: 15, z: 300, opacity: 0 }, 
+          { 
+            scale: 1.0, 
+            rotateY: 0,
+            z: 0,
+            opacity: 1, 
+            duration: 1.2, 
+            ease: "power3.out",
+            onComplete: () => {
+              gsap.set(imgPortal, { clearProps: "scale,transform,opacity,rotateY,z" });
+              if (scrollTriggerRef.current && scrollTriggerRef.current.animation) {
+                scrollTriggerRef.current.animation.progress(scrollTriggerRef.current.progress);
+              }
+            }
+          }
+        );
+      }
+
+      if (infoInner) {
+        gsap.fromTo(infoInner,
+          { xPercent: -40, opacity: 0 },
+          {
+            xPercent: 0,
+            opacity: 1,
+            duration: 1.2,
+            ease: "power3.out",
+            onComplete: () => {
+              gsap.set(infoInner, { clearProps: "transform,xPercent,opacity" });
+            }
+          }
+        );
+      }
+
+      gsap.to(".lamp-container", { opacity: 0, duration: 0.4 });
+      gsap.to(".light-cone", { opacity: 0, duration: 0.4 });
+      gsap.to(".image-glow-overlay", { opacity: 0, duration: 0.4 });
+      gsap.to(".project-img", { filter: "brightness(0.7) contrast(1)", duration: 0.4 });
+
+      if (scrollTriggerRef.current) {
+        scrollTriggerRef.current.update();
+      }
+
       gsap.fromTo(".circuit-bg-container", 
         { opacity: 0 }, 
         { opacity: 0.35, duration: 0.8, ease: "power2.out" }
@@ -489,8 +575,30 @@ export function PortfolioSection() {
 
               <div className="col-span-6 flex items-center justify-end p-6 perspective-1000 relative">
                 <div className="img-portal relative w-[80%] aspect-[4/5] group transition-all duration-700 ease-out layer-optimized mt-16">
+                   
+                   <div className="lamp-container absolute top-0 left-0 w-full h-[50%] pointer-events-none z-20 flex flex-col items-center opacity-0 rounded-t-[2.5rem] overflow-hidden">
+                      <div className="lamp-emitter w-full h-[3px] transition-all duration-300" 
+                           style={{ 
+                             backgroundColor: "#ffffff", 
+                             boxShadow: `0 1px 15px 3px ${project.accent}, 0 2px 30px 6px ${project.accent}, inset 0 0 1px #fff` 
+                           }} 
+                      />
+                      <div className="light-cone absolute top-0 left-0 w-full h-full origin-top opacity-0" 
+                           style={{ 
+                             background: `linear-gradient(to bottom, ${project.accent}33 0%, ${project.accent}05 40%, transparent 100%)`,
+                             mixBlendMode: 'screen'
+                           }} 
+                      />
+                   </div>
+
                    <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-transparent">
-                      <img src={project.img} className="w-full h-full object-cover scale-105 group-hover:scale-100 group-hover:rotate-1 transition-all duration-[1.5s] ease-out filter brightness-[0.7] group-hover:brightness-100" alt={project.title} />
+                      <img src={project.img} className="w-full h-full object-cover scale-105 group-hover:scale-100 group-hover:rotate-1 transition-all duration-[1.5s] ease-out filter brightness-[0.7] group-hover:brightness-100 project-img" alt={project.title} />
+                      <div className="image-glow-overlay absolute inset-0 pointer-events-none opacity-0"
+                           style={{
+                             background: `linear-gradient(to bottom, #ffffff11 0%, ${project.accent}55 12%, ${project.accent}0a 35%, transparent 60%)`,
+                             mixBlendMode: 'color-dodge'
+                           }}
+                      />
                    </div>
                 </div>
               </div>
@@ -525,6 +633,13 @@ export function PortfolioSection() {
           contain-intrinsic-size: 500px;
         }
 
+        :global(.project-detail-container) {
+          opacity: 0;
+          transform: scale(0.35);
+          filter: blur(25px);
+          will-change: transform, opacity, filter;
+        }
+
         .portfolio-webgl-bg,
         .circuit-bg-container,
         .desktop-card > .grid,
@@ -542,21 +657,28 @@ export function PortfolioSection() {
         }
 
         .layer-optimized {
-          will-change: transform;
+          will-change: transform, opacity;
           transform: translateZ(0);
           backface-visibility: hidden;
         }
         .desktop-card {
           backface-visibility: hidden;
           transform-style: preserve-3d;
-          will-change: transform;
+          will-change: transform, opacity;
+          transform: translateZ(0);
+        }
+        .img-portal, .info-inner {
+          will-change: transform, opacity;
+          transform: translateZ(0);
         }
 
         .circuit-bg-container svg {
           transform: translateZ(0);
+          contain: paint layout;
         }
         .pulse-line, .circuit-dot {
           transform: translateZ(0);
+          will-change: stroke-dashoffset, opacity;
         }
         .shine-effect {
           background: linear-gradient(90deg, #fff 0%, #555 25%, #fff 50%, #555 75%, #fff 100%);
@@ -600,6 +722,17 @@ export function PortfolioSection() {
         @keyframes dotPulse {
           0% { opacity: 0.4; r: 2.5px; }
           100% { opacity: 1; r: 4.5px; }
+        }
+
+        .lamp-emitter {
+          position: relative;
+          z-index: 30;
+        }
+        .light-cone {
+          filter: blur(8px);
+          pointer-events: none;
+          transform-style: preserve-3d;
+          will-change: opacity, transform;
         }
 
         .unique-btn {
