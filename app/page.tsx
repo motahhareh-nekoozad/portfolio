@@ -5,11 +5,13 @@ import Navbar from "@/components/navbar";
 import CustomCursor from '@/hooks/custom-cursor';
 import ScrollSpy from '@/components/scroll-spy';
 import ContactSection from '@/components/sections/contactus';
+import AboutSection from '@/components/sections/aboutus';
 
 export default function Home() {
   const activeSections = [
     { id: "hero", label: "Home" },
     { id: "portfolio", label: "Portfolio" },
+    { id: "about", label: "About" },
     { id: "contact", label: "Contact" }
   ];
 
@@ -26,7 +28,7 @@ export default function Home() {
         <div id="portfolio">
           <PortfolioSection />
         </div>
-
+          <AboutSection/>
           <ContactSection />
       </div>
     </main>

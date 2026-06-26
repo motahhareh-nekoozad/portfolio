@@ -10,7 +10,7 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
-  const backdropBgRef = useRef<HTMLDivElement>(null); // رفرنس مدیریت پس‌زمینه
+  const backdropBgRef = useRef<HTMLDivElement>(null); 
   const modalRef = useRef<HTMLDivElement>(null);
 
   const [isHovered, setIsHovered] = useState(false);
@@ -63,23 +63,20 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
   }, []);
 
   // Linux Genie / Compiz Stretch & Retract (Zero-Translation, Pure Scale Deformation)
-  useEffect(() => {
+useEffect(() => {
     if (!backdropRef.current || !backdropBgRef.current || !modalRef.current || !buttonRef.current) return;
 
     gsap.killTweensOf([backdropRef.current, backdropBgRef.current, modalRef.current]);
 
-    // Force layouts calculation and set absolute transformOrigin relative to the button
     const updateTransformOrigin = () => {
-      if (!buttonRef.current || !modalRef.current) return;
+      if (!buttonRef.current || !modalRef.current || !backdropRef.current) return;
 
       const originalDisplay = backdropRef.current.style.display;
       const originalVisibility = backdropRef.current.style.visibility;
       const originalTransform = modalRef.current.style.transform;
 
-      // Temporarily clear inline transforms to get the real unscaled bounding rects (Fixes center-jump bug!)
       modalRef.current.style.transform = "none";
 
-      // Temporarily render display to read real bounding rects
       backdropRef.current.style.display = "flex";
       backdropRef.current.style.visibility = "hidden";
 
@@ -93,7 +90,6 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
       const buttonCenterX = buttonRect.left + buttonRect.width / 2;
       const buttonCenterY = buttonRect.top + buttonRect.height / 2;
 
-      // Calculate absolute offset from the modal's top-left corner
       const localX = buttonCenterX - modalRect.left;
       const localY = buttonCenterY - modalRect.top;
 
@@ -105,23 +101,20 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
     if (isOpen) {
       updateTransformOrigin();
 
-      // Show backdrop container
       gsap.set(backdropRef.current, { display: "flex" });
       gsap.set(backdropBgRef.current, { opacity: 0 });
 
-      // Start modal collapsed inside the button as a thin, twisted diagonal thread
       gsap.set(modalRef.current, {
         scaleX: 0,
         scaleY: 0,
-        skewX: -45, // Reverse warp
+        skewX: -45, 
         skewY: -20,
-        rotate: 20, // Reverse twist
-        x: 0, // Ensure NO translation sliding
+        rotate: 20,
+        x: 0,
         y: 0,
-        opacity: 1 // 100% Solid from the very first frame
+        opacity: 1 
       });
 
-      // Ambient backdrop overlay fade
       gsap.to(backdropBgRef.current, {
         opacity: 1,
         duration: 0.4,
@@ -142,40 +135,37 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
     } else {
       updateTransformOrigin();
 
-      // فید شدن نرم پس‌زمینه به تنهایی
       gsap.to(backdropBgRef.current, {
         opacity: 0,
         duration: 0.75,
         ease: "power2.inOut"
       });
 
-      // ایجاد تایم‌لاین مکش پیوسته و بدون مچاله شدن به خط باریک
       const tl = gsap.timeline({
         onComplete: () => {
-          gsap.set(backdropRef.current, { display: "none" });
+          if (backdropRef.current) {
+            gsap.set(backdropRef.current, { display: "none" });
+          }
         }
       });
 
-      // شروع با وضوح کامل
       gsap.set(modalRef.current, { opacity: 1 });
 
-      // انیمیشن پیوسته: کوچک شدن دو بعدی همزمان با انحراف نرم به سمت دکمه
       tl.to(modalRef.current, {
         scaleX: 0,
         scaleY: 0,
-        skewX: 15,     // انحراف ملایم برای القای جهت کشش بدون تبدیل شدن به خط
+        skewX: 15,     
         skewY: 5,
-        rotate: -10,   // چرخش نرم به سمت نقطه دکمه
+        rotate: -10,   
         duration: 0.75,
-        ease: "power3.in" // شتاب‌گیری کاملاً طبیعی و فیزیکی به سمت داخل دکمه
+        ease: "power3.in" 
       }, 0);
 
-      // محو شدن بسیار تدریجی و مه آلود در طول نیمه دوم حرکت برای حل شدن کامل درون دکمه
       tl.to(modalRef.current, {
         opacity: 0,
         duration: 0.45,
         ease: "power1.in"
-      }, 0.3); // محو شدن از ثانیه 0.3 شروع شده و در 0.75 ثانیه همزمان با کوچک شدن به پایان می‌رسد
+      }, 0.3);
     }
   }, [isOpen]);
 
@@ -264,14 +254,13 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
       setTimeout(() => {
         setFormData({ name: "", email: "", message: "" });
         setFormState("idle");
-        setIsOpen(false); // Auto close after success
+        setIsOpen(false); 
       }, 3500);
     }, 2500);
   };
 
   return (
     <>
-      {/* Floating Action Button */}
       <div
         ref={containerRef}
         className="fixed bottom-6 right-6 z-50 flex items-center justify-center pointer-events-auto"
@@ -336,26 +325,21 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
         </button>
       </div>
 
-      {/* Linux Window Modal Overlay */}
       <div
         ref={backdropRef}
         style={{ display: "none" }}
         className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 select-none"
       >
-        {/* Background Overlay */}
         <div 
           ref={backdropBgRef} 
           className="absolute inset-0 bg-[#030208]/70 backdrop-blur-md pointer-events-auto"
         >
-          {/* Click outside to close */}
           <div className="absolute inset-0 cursor-default" onClick={() => setIsOpen(false)} />
 
-          {/* Ambient Glows reflecting behind the window */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[90px] pointer-events-none mix-blend-screen" />
         </div>
 
-        {/* Linux-like window Container */}
         <div 
           ref={modalRef}
           onMouseMove={handleModalMouseMove}
@@ -363,11 +347,9 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
           style={{ willChange: "transform" }}
           className="relative max-w-lg w-full bg-gradient-to-br from-white/[0.04] via-[#100d28]/85 to-black/90 border border-white/10 rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.85)] group/terminal overflow-hidden"
         >
-          {/* Cyber grid layout inside window */}
           <div className="absolute inset-0 cyber-grid opacity-15 pointer-events-none" />
           <div className="absolute inset-0 scanline-effect pointer-events-none" />
 
-          {/* Linux window Header / Titlebar */}
           <div className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/[0.01]">
             <div className="flex items-center gap-2">
               <button 
@@ -380,7 +362,7 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
               <div className="w-3.5 h-3.5 rounded-full bg-[#f59e0b]/40 cursor-not-allowed" />
               <div className="w-3.5 h-3.5 rounded-full bg-[#10b981]/40 cursor-not-allowed" />
             </div>
-            <div className="w-14" /> {/* spacing element */}
+            <div className="w-14" /> 
           </div>
 
           <div className="p-8 md:p-10 relative z-10">

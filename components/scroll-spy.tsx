@@ -15,7 +15,8 @@ interface ScrollSpyProps {
 
 const defaultSections: Section[] = [
   { id: "hero", label: "Home" },
-  { id: "portfolio", label: "Portfolio" }, 
+  { id: "portfolio", label: "Portfolio" },
+  { id: "about", label: "About Us" }, 
   { id: "contact", label: "Contact Us" }, 
 ];
 
@@ -64,28 +65,54 @@ export default function ScrollSpy({ sections = defaultSections }: ScrollSpyProps
   }, []);
 
   useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: "-20% 0px -20% 0px",
-      threshold: 0.1,
-    };
+    let cachedOffsets: number[] = [];
 
-    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const index = sections.findIndex((sec) => sec.id === entry.target.id);
-          if (index !== -1) setActiveIndex(index);
+    const calculateOffsets = () => {
+      cachedOffsets = sections.map((sec) => {
+        const el = document.getElementById(sec.id);
+        if (!el) return 0;
+        
+        const originalPos = el.style.position;
+        el.style.position = "relative";
+        
+        let top = 0;
+        let parent: HTMLElement | null = el;
+        while (parent) {
+          top += parent.offsetTop;
+          parent = parent.offsetParent as HTMLElement | null;
         }
+        
+        el.style.position = originalPos;
+        return top;
       });
     };
 
-    const observer = new IntersectionObserver(handleIntersection, observerOptions);
-    sections.forEach((sec) => {
-      const element = document.getElementById(sec.id);
-      if (element) observer.observe(element);
-    });
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      let currentIdx = 0;
+      const offsetMargin = 120;
 
-    return () => observer.disconnect();
+      for (let i = 0; i < cachedOffsets.length; i++) {
+        if (scrollY >= cachedOffsets[i] - offsetMargin) {
+          currentIdx = i;
+        }
+      }
+      setActiveIndex(currentIdx);
+    };
+
+    const timeoutId = setTimeout(() => {
+      calculateOffsets();
+      handleScroll();
+    }, 600);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", calculateOffsets, { passive: true });
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", calculateOffsets);
+    };
   }, [sections]);
 
   useEffect(() => {
@@ -121,7 +148,18 @@ export default function ScrollSpy({ sections = defaultSections }: ScrollSpyProps
       portfolioTriggers.forEach(st => st.disable(false)); 
     }
 
-    const targetTop = targetElement.getBoundingClientRect().top + window.scrollY - 80;
+    const originalPos = targetElement.style.position;
+    targetElement.style.position = "relative";
+    
+    let targetTop = 0;
+    let el: HTMLElement | null = targetElement;
+    while (el) {
+      targetTop += el.offsetTop;
+      el = el.offsetParent as HTMLElement | null;
+    }
+    
+    targetElement.style.position = originalPos;
+    targetTop = targetTop - 80;
 
     if (lenis) {
       lenis.scrollTo(targetTop, {

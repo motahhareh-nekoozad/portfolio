@@ -34,7 +34,18 @@ export default function Navbar() {
       portfolioTriggers.forEach(st => st.disable(false)); 
     }
 
-    const targetTop = targetElement.getBoundingClientRect().top + window.scrollY - 80;
+    const originalPos = targetElement.style.position;
+    targetElement.style.position = "relative";
+    
+    let targetTop = 0;
+    let el: HTMLElement | null = targetElement;
+    while (el) {
+      targetTop += el.offsetTop;
+      el = el.offsetParent as HTMLElement | null;
+    }
+    
+    targetElement.style.position = originalPos;
+    targetTop = targetTop - 80;
 
     if (lenis) {
       lenis.scrollTo(targetTop, {
@@ -69,9 +80,10 @@ export default function Navbar() {
       className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-8 px-8 py-3 rounded-full border border-white/10 bg-black/40 backdrop-blur-xl"
     >
       <button onClick={() => scrollToSection("hero")} className="relative text-white/70 hover:text-white transition-all duration-300 text-xs uppercase tracking-widest hover:tracking-[0.2em] px-2">Home</button>
-      <button onClick={() => scrollToSection("portfolio")} className="relative text-white/70 hover:text-white transition-all duration-300 text-xs uppercase tracking-widest hover:tracking-[0.2em] px-2">Work</button>
+      <button onClick={() => scrollToSection("portfolio")} className="relative text-white/70 hover:text-white transition-all duration-300 text-xs uppercase tracking-widest hover:tracking-[0.2em] px-2">Portfolio</button>
       <div className="h-4 w-[1px] bg-white/20" />
-      <button onClick={() => scrollToSection("contact")} className="relative text-white/70 hover:text-white transition-all duration-300 text-xs uppercase tracking-widest hover:tracking-[0.2em] px-2">Contact</button>
+      <button onClick={() => scrollToSection("about")} className="relative text-white/70 hover:text-white transition-all duration-300 text-xs uppercase tracking-widest hover:tracking-[0.2em] px-2">About Us</button>
+      <button onClick={() => scrollToSection("contact")} className="relative text-white/70 hover:text-white transition-all duration-300 text-xs uppercase tracking-widest hover:tracking-[0.2em] px-2">Contact Us</button>
     </nav>
   );
 }
