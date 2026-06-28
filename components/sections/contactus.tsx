@@ -15,43 +15,55 @@ export default function ContactSection() {
   const [formState, setFormState] = useState<"idle" | "transmitting" | "secured">("idle");
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [isTyping, setIsTyping] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768);
+    }
+  }, []);
 
   useGSAP(() => {
     gsap.from(".reveal-contact-item", {
       scrollTrigger: {
         trigger: containerRef.current,
-        start: "top 75%",
+        start: "top 80%",
       },
       opacity: 0,
-      y: 50,
-      filter: "blur(10px)",
-      stagger: 0.15,
-      duration: 1.2,
-      ease: "power3.out",
+      y: 30, 
+      filter: "blur(4px)",
+      stagger: 0.1,
+      duration: 0.8,
+      ease: "power2.out",
       clearProps: "all", 
+      force3D: true,
     });
 
-    gsap.to(".glowing-pulse-bg-1", {
-      x: "15%",
-      y: "-10%",
-      scale: 1.25,
-      opacity: 0.6,
-      duration: 8,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut"
-    });
+    if (!window.matchMedia("(pointer: coarse)").matches) {
+      gsap.to(".glowing-pulse-bg-1", {
+        x: "15%",
+        y: "-10%",
+        scale: 1.25,
+        opacity: 0.6,
+        duration: 8,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
 
-    gsap.to(".glowing-pulse-bg-2", {
-      x: "-10%",
-      y: "15%",
-      scale: 1.2,
-      opacity: 0.5,
-      duration: 6,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut"
-    });
+      gsap.to(".glowing-pulse-bg-2", {
+        x: "-10%",
+        y: "15%",
+        scale: 1.2,
+        opacity: 0.5,
+        duration: 6,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+    } else {
+      gsap.set(".glowing-pulse-bg-1, .glowing-pulse-bg-2", { opacity: 0.35 });
+    }
   }, { scope: containerRef });
 
   useEffect(() => {
@@ -61,6 +73,8 @@ export default function ContactSection() {
   }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isTouchDevice) return; 
+    
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -82,6 +96,8 @@ export default function ContactSection() {
   };
 
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isTouchDevice) return;
+    
     const card = e.currentTarget;
     gsap.to(card, {
       rotateX: 0,
@@ -93,7 +109,10 @@ export default function ContactSection() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    setIsTyping(true);
+    
+    if (!isTyping) {
+      setIsTyping(true);
+    }
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
@@ -120,57 +139,61 @@ export default function ContactSection() {
     <section 
       id="contact" 
       ref={containerRef}
-      className="sticky top-0 h-screen w-full bg-gradient-to-br from-[#0c0d24] via-[#0f0a1c] to-[#05040f] overflow-hidden text-white flex items-center justify-center px-6 select-none z-30 shadow-[0_-50px_100px_rgba(0,0,0,0.95)]"
+      className="relative md:sticky md:top-0 min-h-screen md:h-screen w-full bg-gradient-to-br from-[#0c0d24] via-[#0f0a1c] to-[#05040f] overflow-x-hidden overflow-y-auto md:overflow-hidden text-white flex items-center justify-center px-4 md:px-6 select-none z-30 shadow-[0_-50px_100px_rgba(0,0,0,0.95)] pt-24 pb-12 md:py-0"
       style={{ fontFamily: "'Quicksand', 'Inter', sans-serif" }}
     >
-      <div className="absolute inset-0 cyber-grid opacity-35 pointer-events-none" />
-
+      <div className="absolute inset-0 cyber-grid opacity-25 md:opacity-35 pointer-events-none" />
       <div className="absolute inset-0 scanline-effect pointer-events-none" />
 
-      <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-purple-600/15 rounded-full blur-[130px] pointer-events-none glowing-pulse-bg-1 opacity-50 mix-blend-screen" />
-      <div className="absolute bottom-1/4 right-1/4 w-[550px] h-[550px] bg-cyan-500/15 rounded-full blur-[120px] pointer-events-none glowing-pulse-bg-2 opacity-40 mix-blend-screen" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[750px] bg-pink-500/10 rounded-full blur-[160px] pointer-events-none opacity-20" />
+      <div className="absolute top-1/4 left-1/4 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-purple-600/10 md:bg-purple-600/15 rounded-full blur-[80px] md:blur-[130px] pointer-events-none glowing-pulse-bg-1 opacity-40 md:opacity-50 mix-blend-screen will-change-transform" />
+      <div className="absolute bottom-1/4 right-1/4 w-[280px] md:w-[550px] h-[280px] md:h-[550px] bg-cyan-500/10 md:bg-cyan-500/15 rounded-full blur-[70px] md:blur-[120px] pointer-events-none glowing-pulse-bg-2 opacity-30 md:opacity-40 mix-blend-screen will-change-transform" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] md:w-[750px] h-[350px] md:h-[750px] bg-pink-500/5 md:bg-pink-500/10 rounded-full blur-[100px] md:blur-[160px] pointer-events-none opacity-20" />
 
       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
 
-      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 relative z-10 items-center">
+      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 relative z-10 items-center">
         
         <div 
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
-          className="reveal-contact-item lg:col-span-6 bg-gradient-to-br from-white/[0.04] via-[#100d28]/70 to-black/40 border border-white/10 rounded-[2.5rem] p-8 md:p-12 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] relative group/terminal transition-all duration-300 hover:border-cyan-500/30 overflow-hidden"
+          className="reveal-contact-item lg:col-span-6 bg-gradient-to-br from-white/[0.04] via-[#100d28]/70 to-black/40 border border-white/10 rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] relative group/terminal transition-all duration-300 hover:border-cyan-500/30 overflow-hidden"
         >
-          <div className="absolute inset-0 opacity-0 group-hover/terminal:opacity-100 transition-opacity duration-500 pointer-events-none bg-[radial-gradient(500px_circle_at_var(--mouse-x,_0px)_var(--mouse-y,_0px),_rgba(34,211,238,0.08),_transparent_80%)]" />
+          {!isTouchDevice && (
+            <div className="absolute inset-0 opacity-0 group-hover/terminal:opacity-100 transition-opacity duration-500 pointer-events-none bg-[radial-gradient(500px_circle_at_var(--mouse-x,_0px)_var(--mouse-y,_0px),_rgba(34,211,238,0.08),_transparent_80%)]" />
+          )}
 
           <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-400/50 rounded-tl-xl pointer-events-none" />
           <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-purple-400/50 rounded-tr-xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-purple-400/50 rounded-bl-xl pointer-events-none" />
           <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-400/50 rounded-br-xl pointer-events-none" />
 
-          {/* <div className="absolute top-5 right-5 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-            <span className="text-[9px] font-mono tracking-widest text-cyan-400/90 font-bold">LINK STABLE</span>
-          </div> */}
-
-          <div className="mb-10 mt-2 relative z-10">
-            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none mb-3">
-              INITIALIZE <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">UPLINK</span>
-            </h2>
-            <p className="text-white/50 text-xs tracking-wider uppercase font-mono leading-relaxed">درگاهی امن برای مخابره پیام‌ها و ایده‌های فرکانس بالا.</p>
+          <div className="mb-8 md:mb-10 mt-2 relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter leading-none mb-3">
+                INITIALIZE <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">UPLINK</span>
+              </h2>
+              <p className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase font-mono leading-relaxed">درگاهی امن برای مخابره پیام‌ها و ایده‌های فرکانس بالا.</p>
+            </div>
+            
+            {/* نشانگر وضعیت شبکه برای مچ شدن با یوآی موبایل و دسکتاپ */}
+            {/* <div className="flex items-center gap-2 border border-cyan-500/25 bg-cyan-500/5 px-3 py-1 rounded-full backdrop-blur-md self-start sm:self-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
+              <span className="text-[8px] md:text-[9px] font-mono tracking-widest text-cyan-400/90 font-bold uppercase">LINK SECURE</span>
+            </div> */}
           </div>
 
           {formState === "secured" ? (
             <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in relative z-10">
-              <div className="relative w-20 h-20 mb-6 flex items-center justify-center rounded-full border border-[#10b981]/50 bg-[#10b981]/5 shadow-[0_0_35px_rgba(16,185,129,0.4)]">
-                <svg className="w-8 h-8 text-[#10b981] animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <div className="relative w-16 h-16 md:w-20 md:h-20 mb-6 flex items-center justify-center rounded-full border border-[#10b981]/50 bg-[#10b981]/5 shadow-[0_0_35px_rgba(16,185,129,0.4)]">
+                <svg className="w-6 h-6 md:w-8 md:h-8 text-[#10b981] animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold tracking-widest text-[#10b981] uppercase font-mono mb-2">DATA STREAM SECURED</h3>
-              <p className="text-white/50 text-xs max-w-sm leading-relaxed">بسته‌ اطلاعاتی با موفقیت رمزگذاری و در پایگاه داده فرود آمد. پاسخ به زودی روی فرکانس شما ارسال خواهد شد.</p>
+              <h3 className="text-lg md:text-xl font-bold tracking-widest text-[#10b981] uppercase font-mono mb-2">DATA STREAM SECURED</h3>
+              <p className="text-white/50 text-[11px] md:text-xs max-w-sm leading-relaxed px-4">بسته‌ اطلاعاتی با موفقیت رمزگذاری و در پایگاه داده فرود آمد. پاسخ به زودی روی فرکانس شما ارسال خواهد شد.</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmission} className="space-y-6 relative z-10">
+            <form onSubmit={handleSubmission} className="space-y-4 md:space-y-6 relative z-10">
               
               <div className="relative group/input">
                 <input
@@ -179,7 +202,7 @@ export default function ContactSection() {
                   disabled={formState === "transmitting"}
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
-                  className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-5 py-4 text-white text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-cyan-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono disabled:opacity-40"
+                  className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-4 py-3.5 md:px-5 md:py-4 text-white text-xs md:text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-cyan-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono disabled:opacity-40"
                   placeholder="IDENTIFIER / YOUR NAME"
                 />
                 <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-transparent group-focus-within/input:border-cyan-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
@@ -193,7 +216,7 @@ export default function ContactSection() {
                   disabled={formState === "transmitting"}
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-5 py-4 text-white text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-purple-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono disabled:opacity-40"
+                  className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-4 py-3.5 md:px-5 md:py-4 text-white text-xs md:text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-purple-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono disabled:opacity-40"
                   placeholder="FREQUENCY GATEWAY / EMAIL"
                 />
                 <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-transparent group-focus-within/input:border-purple-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
@@ -207,7 +230,7 @@ export default function ContactSection() {
                   disabled={formState === "transmitting"}
                   value={formData.message}
                   onChange={(e) => handleInputChange("message", e.target.value)}
-                  className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-5 py-4 text-white text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-cyan-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono resize-none disabled:opacity-40"
+                  className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-4 py-3.5 md:px-5 md:py-4 text-white text-xs md:text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-cyan-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono resize-none disabled:opacity-40"
                   placeholder="ENCRYPT MESSAGE / PROJECT DETAILS..."
                 />
                 <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-transparent group-focus-within/input:border-cyan-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
@@ -220,7 +243,7 @@ export default function ContactSection() {
                 className={`unique-btn group relative w-full ${formState === "transmitting" ? "cursor-wait" : ""}`} 
                 style={{ "--accent-color": formState === "transmitting" ? "#c084fc" : "#38bdf8" } as React.CSSProperties}
               >
-                <span className="btn-content w-full p-2 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-xs py-4 transition-all duration-300">
+                <span className="btn-content w-full p-2 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] md:text-xs py-3.5 md:py-4 transition-all duration-300">
                   {formState === "transmitting" ? (
                     <>
                       <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
@@ -240,7 +263,7 @@ export default function ContactSection() {
           )}
         </div>
 
-        <div className="lg:col-span-6 flex flex-col gap-8">
+        <div className="lg:col-span-6 flex flex-col gap-6 md:gap-8 w-full">
           
           <div className="reveal-contact-item hidden md:flex relative w-full aspect-[2/1] items-center justify-center rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-[#0e0c1f]/50 to-[#030305]/80 p-6 overflow-hidden shadow-2xl group/hub">
             <div className="absolute inset-0 cyber-grid opacity-15 pointer-events-none" />
@@ -275,52 +298,50 @@ export default function ContactSection() {
             </div>
           </div>
 
-          <div 
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            className="reveal-contact-item flex items-center gap-5 bg-gradient-to-r from-white/[0.03] to-[#120f2b]/70 border border-white/10 rounded-2xl p-5 md:p-6 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/40 hover:bg-[#131032]/75 group/card shadow-lg relative overflow-hidden"
-          >
-            <div className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none bg-[radial-gradient(350px_circle_at_var(--mouse-x,_0px)_var(--mouse-y,_0px),_rgba(34,211,238,0.08),_transparent_80%)]" />
-            <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyan-400/30" />
-            <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyan-400/30" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 md:gap-6 w-full">
             
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 group-hover/card:shadow-[0_0_15px_rgba(56,189,248,0.45)] transition-all duration-300 relative z-10">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.53-1.39.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.46-.42-1.4-.88.03-.24.36-.49.99-.75 3.88-1.69 6.46-2.8 7.74-3.32 3.66-1.5 4.42-1.76 4.92-1.77.11 0 .36.03.52.16.14.12.18.28.19.4z" />
-              </svg>
+            <div 
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              className="reveal-contact-item flex items-center gap-4 md:gap-5 bg-gradient-to-r from-white/[0.03] to-[#120f2b]/70 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/40 hover:bg-[#131032]/75 group/card shadow-lg relative overflow-hidden"
+            >
+              {!isTouchDevice && (
+                <div className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none bg-[radial-gradient(350px_circle_at_var(--mouse-x,_0px)_var(--mouse-y,_0px),_rgba(34,211,238,0.08),_transparent_80%)]" />
+              )}
+              <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyan-400/30" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyan-400/30" />
+              
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 group-hover/card:shadow-[0_0_15px_rgba(56,189,248,0.45)] transition-all duration-300 relative z-10 shrink-0">
+                <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.53-1.39.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.46-.42-1.4-.88.03-.24.36-.49.99-.75 3.88-1.69 6.46-2.8 7.74-3.32 3.66-1.5 4.42-1.76 4.92-1.77.11 0 .36.03.52.16.14.12.18.28.19.4z" />
+                </svg>
+              </div>
+              <div className="relative z-10 min-w-0">
+                <p className="text-xs md:text-sm font-semibold tracking-wider text-white group-hover/card:text-cyan-400 transition-colors duration-300 truncate">@nextgen_agency</p>
+              </div>
             </div>
-            <div className="relative z-10">
-              {/* <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-mono tracking-widest text-white/60 uppercase">QUANTUM FREQUENCY</span>
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10b981]" />
-                <span className="text-[8px] font-mono text-[#10b981] animate-pulse">ONLINE</span>
-              </div> */}
-              <p className="text-sm font-semibold tracking-wider text-white group-hover/card:text-cyan-400 transition-colors duration-300">@nextgen_agency</p>
-            </div>
-          </div>
 
-          <div 
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            className="reveal-contact-item flex items-center gap-5 bg-gradient-to-r from-white/[0.03] to-[#120f2b]/70 border border-white/10 rounded-2xl p-5 md:p-6 backdrop-blur-md transition-all duration-300 hover:border-purple-400/40 hover:bg-[#131032]/75 group/card shadow-lg relative overflow-hidden"
-          >
-            <div className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none bg-[radial-gradient(350px_circle_at_var(--mouse-x,_0px)_var(--mouse-y,_0px),_rgba(168,132,252,0.08),_transparent_80%)]" />
-            <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-purple-400/30" />
-            <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-purple-400/30" />
+            <div 
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              className="reveal-contact-item flex items-center gap-4 md:gap-5 bg-gradient-to-r from-white/[0.03] to-[#120f2b]/70 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-md transition-all duration-300 hover:border-purple-400/40 hover:bg-[#131032]/75 group/card shadow-lg relative overflow-hidden"
+            >
+              {!isTouchDevice && (
+                <div className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none bg-[radial-gradient(350px_circle_at_var(--mouse-x,_0px)_var(--mouse-y,_0px),_rgba(168,132,252,0.08),_transparent_80%)]" />
+              )}
+              <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-purple-400/30" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-purple-400/30" />
 
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center border border-purple-500/30 bg-purple-500/10 text-purple-400 group-hover/card:shadow-[0_0_15px_rgba(192,132,252,0.45)] transition-all duration-300 relative z-10">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center border border-purple-500/30 bg-purple-500/10 text-purple-400 group-hover/card:shadow-[0_0_15px_rgba(192,132,252,0.45)] transition-all duration-300 relative z-10 shrink-0">
+                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="relative z-10 min-w-0">
+                <p className="text-xs md:text-sm font-semibold tracking-wider text-white group-hover/card:text-purple-400 transition-colors duration-300 truncate">uplink@agency.next</p>
+              </div>
             </div>
-            <div className="relative z-10">
-              {/* <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-mono tracking-widest text-white/60 uppercase">SECURE COMM CHANNEL</span>
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10b981]" />
-                <span className="text-[8px] font-mono text-[#10b981]">SECURED</span>
-              </div> */}
-              <p className="text-sm font-semibold tracking-wider text-white group-hover/card:text-purple-400 transition-colors duration-300">uplink@agency.next</p>
-            </div>
+
           </div>
 
         </div>
@@ -330,8 +351,10 @@ export default function ContactSection() {
         .cyber-grid {
           background-size: 50px 50px;
           background-image: 
-            linear-gradient(to right, rgba(168, 85, 247, 0.025) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(56, 189, 248, 0.025) 1px, transparent 1px);
+            linear-gradient(to right, rgba(168, 85, 247, 0.02) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(56, 189, 248, 0.02) 1px, transparent 1px);
+          transform: translate3d(0,0,0);
+          will-change: transform;
         }
 
         @keyframes scanline {
@@ -341,6 +364,7 @@ export default function ContactSection() {
         .scanline-effect {
           background: linear-gradient(to bottom, transparent, rgba(56, 189, 248, 0.03), transparent);
           animation: scanline 10s linear infinite;
+          transform: translate3d(0,0,0);
         }
 
         @keyframes contactPulse {
@@ -379,6 +403,7 @@ export default function ContactSection() {
           background: rgba(255, 255, 255, 0.03);
           transition: all 0.4s ease;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+          transform: translate3d(0,0,0);
         }
         
         .unique-btn::before {

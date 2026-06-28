@@ -63,7 +63,7 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
   }, []);
 
   // Linux Genie / Compiz Stretch & Retract (Zero-Translation, Pure Scale Deformation)
-useEffect(() => {
+  useEffect(() => {
     if (!backdropRef.current || !backdropBgRef.current || !modalRef.current || !buttonRef.current) return;
 
     gsap.killTweensOf([backdropRef.current, backdropBgRef.current, modalRef.current]);
@@ -210,14 +210,14 @@ useEffect(() => {
     card.style.setProperty("--mouse-x", `${x}px`);
     card.style.setProperty("--mouse-y", `${y}px`);
 
-    const tiltX = -((y - rect.height / 2) / (rect.height / 2)) * 3; 
-    const tiltY = ((x - rect.width / 2) / (rect.width / 2)) * 3; 
+    const tiltX = -((y - rect.height / 2) / (rect.height / 2)) * 0.8; 
+    const tiltY = ((x - rect.width / 2) / (rect.width / 2)) * 0.8; 
 
     gsap.to(card, {
       rotateX: tiltX,
       rotateY: tiltY,
-      transformPerspective: 1000,
-      duration: 0.3,
+      transformPerspective: 1500,
+      duration: 0.5, 
       ease: "power2.out"
     });
   };
