@@ -57,7 +57,7 @@ export const DetailsPane = React.memo(({ project }: DetailsPaneProps) => {
           <span className="text-[10px] font-mono px-3 py-1 border border-white/10 rounded-md tracking-wider bg-white/[0.02]" style={{ color: project.accent }}>
             [ FILE // {project.id} ]
           </span>
-          <span className="text-[10px] text-white/40 font-mono">[ DIRECTORY_ACTIVE ]</span>
+          {/* <span className="text-[10px] text-white/40 font-mono">[ DIRECTORY_ACTIVE ]</span> */}
         </div>
 
         <h1 className="text-4xl lg:text-6xl font-black tracking-tight leading-none detail-title" style={{ textShadow: `0 0 45px ${project.accent}20` }}>

@@ -31,7 +31,7 @@ export const BackButton = React.memo(({ project, onBack }: BackButtonProps) => {
 
       <button 
         onClick={onBack} 
-        className="mobile-back-btn lg:hidden fixed top-6 left-6 z-50 flex items-center justify-center w-11 h-11 rounded-full border border-white/10 text-white bg-black/80 shadow-[0_4px_24px_rgba(0,0,0,0.8)] active:scale-90 transition-all duration-300"
+        className="mobile-back-btn lg:hidden fixed top-20 left-6 z-50 flex items-center justify-center w-11 h-11 rounded-full border border-white/10 text-white bg-black/80 shadow-[0_4px_24px_rgba(0,0,0,0.8)] active:scale-90 transition-all duration-300"
         style={{ '--accent-glow': project.accent } as React.CSSProperties}
       >
         <span className="absolute inset-0 rounded-full opacity-25 animate-pulse" style={{ boxShadow: `0 0 15px var(--accent-glow)` }} />

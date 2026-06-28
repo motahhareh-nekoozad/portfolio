@@ -35,7 +35,7 @@ export default function AboutSection() {
     },
         {
       id: 1,
-      name: "پریناز بختیار",
+      name: "پریناز بختیاری",
       role: "مدیر نوآوری و آرشیتکت ارشد",
       bio: "خلاقیت مداوم در طراحی سیستم‌های مقیاس‌پذیر و هدایت تیم به سمت افق‌های نوین تکنولوژی.",
       image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600",

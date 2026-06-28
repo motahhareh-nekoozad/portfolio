@@ -25,7 +25,7 @@ export const MobileCard = React.memo(({ project, index, onExplore }: MobileCardP
       />
 
       <div className="flex justify-between items-center z-10">
-        <span className="text-[10px] font-mono tracking-widest text-white/40">{project.id} // SYS_INIT</span>
+        {/* <span className="text-[10px] font-mono tracking-widest text-white/40">{project.id} // SYS_INIT</span> */}
         <div className="flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: project.accent }} />
           <span className="text-[9px] font-mono text-white/30 tracking-wider">PROJECTED</span>

@@ -450,6 +450,12 @@ export function PortfolioSection() {
           transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
         }
 
+        /* [تغییر کوچک] برای مهار نورهای اضافی در حاشیه گرد کارت موبایل */
+        .portfolio-section-container .mobile-card {
+          overflow: hidden !important;
+          -webkit-mask-image: -webkit-radial-gradient(white, black);
+        }
+
         body.is-nav-scrolling .portfolio-section-container .portfolio-webgl-bg,
         body.is-nav-scrolling .portfolio-section-container .circuit-bg-container,
         body.is-nav-scrolling .portfolio-section-container .desktop-card > .grid,
@@ -482,6 +488,13 @@ export function PortfolioSection() {
           will-change: transform, opacity;
           transform: translateZ(0);
         }
+
+        /* [تغییر کوچک] اعمال ماسک گردی کارت به درگاه تصویر در زمان انیمیشن ها */
+        .portfolio-section-container .img-portal {
+          overflow: hidden !important;
+          -webkit-mask-image: -webkit-radial-gradient(white, black);
+        }
+
         .portfolio-section-container .img-portal, 
         .portfolio-section-container .info-inner, 
         .portfolio-section-container .mobile-info-inner {
