@@ -18,6 +18,8 @@ export default function CustomCursor() {
   });
 
   useEffect(() => {
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+
     const cursor = cursorRef.current;
     if (!cursor) return;
 
@@ -143,8 +145,16 @@ export default function CustomCursor() {
       />
       
       <style jsx global>{`
-        body, button, a, input, select, textarea, .interactive, button *, a * {
-          cursor: none !important;
+        @media (pointer: fine) {
+          body, button, a, input, select, textarea, .interactive, button *, a * {
+            cursor: none !important;
+          }
+        }
+
+        @media (pointer: coarse) {
+          .custom-mercury-cursor {
+            display: none !important;
+          }
         }
 
         .custom-mercury-cursor {

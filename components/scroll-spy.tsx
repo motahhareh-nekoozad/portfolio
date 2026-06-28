@@ -193,7 +193,7 @@ export default function ScrollSpy({ sections = defaultSections }: ScrollSpyProps
   return (
     <div
       ref={containerRef}
-      className="fixed right-6 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-7 px-4 rounded-3xl border border-white/10 bg-[#060608]/40 backdrop-blur-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] select-none group/panel hover:border-purple-500/20 transition-colors duration-500 will-change-transform"
+      className="md:flex hidden fixed right-6 md:right-8 top-1/2 -translate-y-1/2 z-50  flex-col items-center py-7 px-4 rounded-3xl border border-white/10 bg-[#060608]/40 backdrop-blur-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] select-none group/panel hover:border-purple-500/20 transition-colors duration-500 will-change-transform"
     >
       <div className="relative flex flex-col gap-8 items-center">
         <div className="absolute w-[2px] h-[calc(100%-16px)] bg-white/5 top-2 left-1/2 -translate-x-1/2 pointer-events-none overflow-hidden rounded-full fiber-track" />
