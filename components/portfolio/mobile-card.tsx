@@ -25,7 +25,6 @@ export const MobileCard = React.memo(({ project, index, onExplore }: MobileCardP
       />
 
       <div className="flex justify-between items-center z-10">
-        {/* <span className="text-[10px] font-mono tracking-widest text-white/40">{project.id} // SYS_INIT</span> */}
         <div className="flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: project.accent }} />
           <span className="text-[9px] font-mono text-white/30 tracking-wider">PROJECTED</span>
@@ -34,7 +33,7 @@ export const MobileCard = React.memo(({ project, index, onExplore }: MobileCardP
 
       <div className="flex-1 my-3 flex items-center justify-center perspective-1000 w-full">
         <div 
-          className="img-portal relative w-full aspect-[4/5] rounded-2xl overflow-hidden group border border-white/5 transition-transform duration-500 will-change-transform"
+          className="img-portal relative w-full aspect-[4/5] rounded-2xl overflow-hidden group border border-white/5 transition-transform duration-300 ease-out will-change-transform"
           style={{
             boxShadow: `0 15px 35px -10px rgba(0,0,0,0.85), 0 0 15px -3px ${project.accent}20`
           }}
@@ -55,7 +54,11 @@ export const MobileCard = React.memo(({ project, index, onExplore }: MobileCardP
            </div>
 
            <div className="relative w-full h-full rounded-2xl overflow-hidden bg-transparent">
-              <img src={project.img} className="w-full h-full object-cover scale-105 project-img brightness-[0.7] transition-all duration-700" alt={project.title} />
+              <img 
+                src={project.img} 
+                className="w-full h-full object-cover scale-105 project-img brightness-[0.7] transition-[transform,filter] duration-500 ease-out" 
+                alt={project.title} 
+              />
               <div className="image-glow-overlay absolute inset-0 pointer-events-none opacity-0"
                    style={{
                      background: `linear-gradient(to bottom, #ffffff11 0%, ${project.accent}44 12%, ${project.accent}08 35%, transparent 60%)`,
@@ -77,7 +80,8 @@ export const MobileCard = React.memo(({ project, index, onExplore }: MobileCardP
 
         <button 
           onClick={(e) => onExplore(project, index, e)}
-          className="unique-btn group relative w-full mt-1.5" 
+          className="unique-btn group relative w-[90%] self-center mt-2.5" 
+          dir="ltr"
           style={{ '--accent-color': project.accent } as React.CSSProperties}
         >
           <span className="btn-content w-full py-3.5 text-[10px] tracking-widest font-mono font-bold flex justify-center items-center gap-2">
