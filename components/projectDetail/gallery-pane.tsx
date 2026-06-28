@@ -1,6 +1,6 @@
 "use client";
 import React, { useRef, useState } from "react";
-import { Project } from "./types";
+import { Project } from "@/types/type";
 
 interface GalleryPaneProps {
   project: Project;
