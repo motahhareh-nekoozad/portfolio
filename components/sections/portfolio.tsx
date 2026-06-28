@@ -1,218 +1,47 @@
 "use client";
-import React, { useRef, useEffect, useState, memo, useMemo } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { MeshDistortMaterial, Plane } from "@react-three/drei";
-import * as THREE from "three";
-import { ProjectDetail, Project } from "@/components/project-detail";
+import { ProjectDetail } from "@/components/projectDetail/project-detail";
+import { PROJECTS } from "@/data/project-data"
+import { BackgroundCanvas } from "@/components/portfolio/background-canvas";
+import { DesktopCard } from "@/components/portfolio/desktop-card";
+import { MobileCard } from "@/components/portfolio/mobile-card";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const PROJECTS: Project[] = [
-  {
-    id: "01",
-    title: "NEXUS BEYOND",
-    color: "#0a0303",
-    accent: "#ef4444", 
-    desc: "آینده‌نگری در طراحی رابط کاربری با تمرکز بر تعاملات سه بعدی و سرعت رندرینگ فوق‌العاده.",
-    img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564",
-    gallery: [
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564",
-      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1000",
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1000",
-    ]
-  },
-  {
-    id: "02",
-    title: "CYBER PULSE",
-    color: "#030712",
-    accent: "#3b82f6", 
-    desc: "سیستم مانیتورینگ هوشمند برای دیتاسنترهای نسل جدید با پالت رنگی نئون.",
-    img: "https://images.unsplash.com/photo-1633167606207-d840b5070fc2?q=80&w=2564",
-    gallery: [
-      "https://images.unsplash.com/photo-1633167606207-d840b5070fc2?q=80&w=2564",
-      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1000",
-      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1000",
-    ]
-  },
-  {
-    id: "03",
-    title: "LIQUID MIND",
-    color: "#03140d",
-    accent: "#10b981", 
-    desc: "تجربه‌ای فراتر از واقعیت در دنیای دیجیتال با هوش مصنوعی.",
-    img: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2564",
-    gallery: [
-      "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2564",
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000",
-      "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=1000",
-    ]
-  },
-  {
-    id: "04",
-    title: "SOLARIS WAVE",
-    color: "#140c03",
-    accent: "#f59e0b", 
-    desc: "شبکه‌های هوشمند نسل جدید مبتنی بر بلاکچین برای مدیریت توزیع انرژی پاک.",
-    img: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2564",
-    gallery: [
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2564",
-      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000",
-      "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?q=80&w=1000",
-    ]
-  }
-];
-
-const GlobalMercuryBackground = memo(() => {
-  const meshRef = useRef<THREE.Mesh>(null!);
-  const materialRef = useRef<any>(null!);
-  const { viewport } = useThree();
-  const lastIndexRef = useRef(0);
-  const lastZoomValRef = useRef(-1);
-
-  const projectColors = useMemo(() => PROJECTS.map(p => new THREE.Color(p.accent)), []);
-  
-  const zoomObj = useMemo(() => ({ value: 0 }), []);
-
-  useEffect(() => {
-    const handleProjectChange = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      const index = customEvent.detail.index;
-      
-      if (index === lastIndexRef.current) return;
-      lastIndexRef.current = index;
-
-      if (materialRef.current) {
-        const targetColor = projectColors[index];
-        gsap.to(materialRef.current.color, {
-          r: targetColor.r * 0.05,
-          g: targetColor.g * 0.05,
-          b: targetColor.b * 0.05,
-          duration: 0.8,
-          ease: "power2.out"
-        });
-      }
-    };
-
-    const handleExplore = () => {
-      gsap.to(zoomObj, {
-        value: 1,
-        duration: 1.2,
-        ease: "power3.inOut"
-      });
-    };
-
-    const handleBack = () => {
-      gsap.to(zoomObj, {
-        value: 0,
-        duration: 1.0,
-        ease: "power3.out"
-      });
-    };
-
-    window.addEventListener("project-change", handleProjectChange);
-    window.addEventListener("project-explore", handleExplore);
-    window.addEventListener("project-back", handleBack);
-
-    return () => {
-      window.removeEventListener("project-change", handleProjectChange);
-      window.removeEventListener("project-explore", handleExplore);
-      window.removeEventListener("project-back", handleBack);
-    };
-  }, [projectColors, zoomObj]);
-
-  useFrame((state) => {
-    const { clock, mouse, camera } = state;
-    
-    const pCamera = camera as THREE.PerspectiveCamera;
-
-    const currentZoom = zoomObj.value;
-    if (Math.abs(currentZoom - lastZoomValRef.current) > 0.0001) {
-      pCamera.position.z = THREE.MathUtils.lerp(4, -1.2, currentZoom);
-      pCamera.fov = THREE.MathUtils.lerp(50, 105, currentZoom);
-      pCamera.updateProjectionMatrix();
-      lastZoomValRef.current = currentZoom;
-    }
-
-    if (meshRef.current) {
-      meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, mouse.y * 0.08, 0.05);
-      meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, mouse.x * 0.08, 0.05);
-    }
-    if (materialRef.current) {
-      materialRef.current.distort = 0.3 + Math.sin(clock.getElapsedTime() * 0.3) * 0.05;
-    }
-  });
-
-  return (
-    <Plane args={[viewport.width * 2, viewport.height * 2, 8, 8]} ref={meshRef}>
-      <MeshDistortMaterial
-        ref={materialRef}
-        speed={1}
-        distort={0.3}
-        color={projectColors[0].clone().multiplyScalar(0.05)}
-        roughness={0.2}
-        metalness={0.8}
-      />
-    </Plane>
-  );
-});
-GlobalMercuryBackground.displayName = "GlobalMercuryBackground";
-
-const BackgroundCanvas = memo(({ active }: { active: boolean }) => {
-  return (
-    <div className="portfolio-webgl-bg hidden lg:block fixed inset-0 z-0 pointer-events-none opacity-0 will-change-transform">
-      <Canvas 
-        camera={{ position: [0, 0, 4] }} 
-        frameloop={active ? "always" : "never"}
-        gl={{ 
-          antialias: false, 
-          powerPreference: "high-performance", 
-          alpha: false,
-          stencil: false,
-          depth: false,
-          failIfMajorPerformanceCaveat: true
-        }}
-        dpr={1}
-      >
-        <ambientLight intensity={1.2} />
-        <directionalLight position={[4, 4, 3]} intensity={2.5} color="#ffffff" />
-        <directionalLight position={[-4, -4, -3]} intensity={1.5} color="#555555" />
-        <pointLight position={[0, 0, 5]} intensity={1.0} />
-        <GlobalMercuryBackground />
-      </Canvas>
-    </div>
-  );
-}, (prev, next) => prev.active === next.active);
-BackgroundCanvas.displayName = "BackgroundCanvas";
-
 export function PortfolioSection() {
   const [hasMounted, setHasMounted] = useState(false);
-  const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [activeProject, setActiveProject] = useState<any>(null);
+  const [isDetailed, setIsDetailed] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isInView, setIsInView] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const horizontalRef = useRef<HTMLDivElement>(null);
-  
   const scrollTriggerRef = useRef<any>(null);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
 
-  const handleExploreProject = (project: Project, cardIndex: number, e: React.MouseEvent<HTMLButtonElement>) => {
+  useEffect(() => {
+    document.body.style.overflow = isDetailed ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isDetailed]);
+
+  const handleExploreProject = (project: any, cardIndex: number, e: React.MouseEvent<HTMLButtonElement>) => {
     if (isTransitioning) return;
     setIsTransitioning(true);
 
-    const clickX = e.clientX;
-    const clickY = e.clientY;
+    const isDesktop = window.innerWidth >= 1024;
+    const cardEl = isDesktop 
+      ? document.querySelectorAll(".desktop-card")[cardIndex]
+      : document.querySelectorAll(".mobile-card")[cardIndex];
 
-    const cardEl = document.querySelectorAll(".desktop-card")[cardIndex];
-    const infoInner = cardEl?.querySelector(".info-inner");
+    const infoInner = cardEl?.querySelector(isDesktop ? ".info-inner" : ".mobile-info-inner");
     const imgPortal = cardEl?.querySelector(".img-portal");
-
     const lampContainer = cardEl?.querySelector(".lamp-container");
     const lightCone = cardEl?.querySelector(".light-cone");
     const imageGlowOverlay = cardEl?.querySelector(".image-glow-overlay");
@@ -224,49 +53,50 @@ export function PortfolioSection() {
 
         if (infoInner) {
           gsap.to(infoInner, {
-            xPercent: -40,
+            xPercent: isDesktop ? -40 : 0,
+            yPercent: isDesktop ? 0 : 30,
             opacity: 0,
             duration: 1.0,
-            ease: "power3.inOut"
+            ease: "power3.inOut",
+            force3D: true
           });
         }
 
         if (imgPortal) {
           gsap.to(imgPortal, {
-            scale: 3.5,
-            rotateY: 15,
-            z: 300,
+            scale: isDesktop ? 3.5 : 2.0,
+            rotateY: isDesktop ? 15 : 0,
+            z: isDesktop ? 300 : 80,
             opacity: 0,
             duration: 1.2,
-            ease: "power3.inOut"
+            ease: "power3.inOut",
+            force3D: true
           });
         }
         
         gsap.to([".circuit-bg-container", ".portfolio-webgl-bg"], {
           opacity: 0,
           duration: 0.6,
-          ease: "power2.out"
+          ease: "power2.out",
+          force3D: true
         });
 
         setActiveProject(project);
+        setIsDetailed(true);
 
         setTimeout(() => {
           gsap.fromTo(".project-detail-container", 
-            { 
-              scale: 0.35, 
-              opacity: 0,
-              filter: "blur(25px)",
-              transformOrigin: "center center"
-            },
+            { scale: 0.35, opacity: 0, filter: "blur(25px)", transformOrigin: "center center" },
             { 
               scale: 1.0, 
               opacity: 1, 
               filter: "blur(0px)",
               duration: 1.3, 
               ease: "power4.out",
+              force3D: true,
               onComplete: () => {
                 const trigger = scrollTriggerRef.current;
-                if (trigger) {
+                if (trigger && isDesktop) {
                   const start = trigger.start;
                   const end = trigger.end;
                   const totalScroll = end - start;
@@ -302,11 +132,17 @@ export function PortfolioSection() {
   const handleBackToGrid = () => {
     if (!activeProject || isTransitioning) return;
     setIsTransitioning(true);
+    setIsDetailed(false);
 
     const currentProject = activeProject;
     const cardIndex = PROJECTS.findIndex(p => p.id === currentProject.id);
-    const cardEl = document.querySelectorAll(".desktop-card")[cardIndex];
-    const infoInner = cardEl?.querySelector(".info-inner");
+
+    const isDesktop = window.innerWidth >= 1024;
+    const cardEl = isDesktop 
+      ? document.querySelectorAll(".desktop-card")[cardIndex]
+      : document.querySelectorAll(".mobile-card")[cardIndex];
+
+    const infoInner = cardEl?.querySelector(isDesktop ? ".info-inner" : ".mobile-info-inner");
     const imgPortal = cardEl?.querySelector(".img-portal");
 
     window.dispatchEvent(new CustomEvent("project-back"));
@@ -317,6 +153,7 @@ export function PortfolioSection() {
       filter: "blur(20px)",
       duration: 1.1,
       ease: "power3.inOut",
+      force3D: true,
       onComplete: () => {
         setActiveProject(null);
         setIsTransitioning(false);
@@ -326,7 +163,7 @@ export function PortfolioSection() {
     setTimeout(() => {
       if (imgPortal) {
         gsap.fromTo(imgPortal, 
-          { scale: 3.5, rotateY: 15, z: 300, opacity: 0 }, 
+          { scale: isDesktop ? 3.5 : 2.0, rotateY: isDesktop ? 15 : 0, z: isDesktop ? 300 : 80, opacity: 0 }, 
           { 
             scale: 1.0, 
             rotateY: 0,
@@ -334,9 +171,10 @@ export function PortfolioSection() {
             opacity: 1, 
             duration: 1.2, 
             ease: "power3.out",
+            force3D: true,
             onComplete: () => {
               gsap.set(imgPortal, { clearProps: "scale,transform,opacity,rotateY,z" });
-              if (scrollTriggerRef.current && scrollTriggerRef.current.animation) {
+              if (isDesktop && scrollTriggerRef.current && scrollTriggerRef.current.animation) {
                 scrollTriggerRef.current.animation.progress(scrollTriggerRef.current.progress);
               }
             }
@@ -346,14 +184,16 @@ export function PortfolioSection() {
 
       if (infoInner) {
         gsap.fromTo(infoInner,
-          { xPercent: -40, opacity: 0 },
+          { xPercent: isDesktop ? -40 : 0, yPercent: isDesktop ? 0 : 30, opacity: 0 },
           {
             xPercent: 0,
+            yPercent: 0,
             opacity: 1,
             duration: 1.2,
             ease: "power3.out",
+            force3D: true,
             onComplete: () => {
-              gsap.set(infoInner, { clearProps: "transform,xPercent,opacity" });
+              gsap.set(infoInner, { clearProps: "transform,xPercent,yPercent,opacity" });
             }
           }
         );
@@ -368,14 +208,8 @@ export function PortfolioSection() {
         scrollTriggerRef.current.update();
       }
 
-      gsap.fromTo(".circuit-bg-container", 
-        { opacity: 0 }, 
-        { opacity: 0.35, duration: 0.8, ease: "power2.out" }
-      );
-      gsap.fromTo(".portfolio-webgl-bg", 
-        { opacity: 0 }, 
-        { opacity: 0.4, duration: 0.8, ease: "power2.out" }
-      );
+      gsap.fromTo(".circuit-bg-container", { opacity: 0 }, { opacity: 0.35, duration: 0.8, ease: "power2.out", force3D: true });
+      gsap.fromTo(".portfolio-webgl-bg", { opacity: 0 }, { opacity: 0.4, duration: 0.8, ease: "power2.out", force3D: true });
     }, 50);
   };
 
@@ -396,15 +230,12 @@ export function PortfolioSection() {
             start: "top 80%",
             end: "bottom 20%",
             toggleActions: "play reverse play reverse",
-            onToggle: (self) => {
-              setIsInView(self.isActive);
-            }
+            onToggle: (self) => { setIsInView(self.isActive); }
           }
         }
       );
 
       const cards = gsap.utils.toArray<HTMLElement>(".desktop-card");
-      
       const firstCard = cards[0];
       if (firstCard) {
         const firstInfo = firstCard.querySelector(".info-inner");
@@ -431,10 +262,7 @@ export function PortfolioSection() {
           refreshPriority: 10,
           onUpdate: (self) => {
             const progress = self.progress;
-            const index = Math.min(
-              Math.floor(progress * PROJECTS.length),
-              PROJECTS.length - 1
-            );
+            const index = Math.min(Math.floor(progress * PROJECTS.length), PROJECTS.length - 1);
             if (index !== lastIndex) {
               lastIndex = index;
               window.dispatchEvent(new CustomEvent("project-change", { detail: { index } }));
@@ -475,22 +303,85 @@ export function PortfolioSection() {
         const imgPortal = card.querySelector(".img-portal");
         const circuit = card.querySelector(".circuit-bg-container");
 
-        if (info) tl.fromTo(info, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 1 }, positionInTimeline + 1.2);
-        if (imgPortal) tl.fromTo(imgPortal, { scale: 1.15, rotateX: -5, opacity: 0 }, { scale: 1, rotateX: 0, opacity: 1, duration: 1.5 }, positionInTimeline + 0.8);
-        if (circuit) tl.fromTo(circuit, { opacity: 0 }, { opacity: 0.35, duration: 2 }, positionInTimeline + 0.5);
+        if (info) tl.fromTo(info, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 1, force3D: true }, positionInTimeline + 1.2);
+        if (imgPortal) tl.fromTo(imgPortal, { scale: 1.15, rotateX: -5, opacity: 0 }, { scale: 1, rotateX: 0, opacity: 1, duration: 1.5, force3D: true }, positionInTimeline + 0.8);
+        if (circuit) tl.fromTo(circuit, { opacity: 0 }, { opacity: 0.35, duration: 2, force3D: true }, positionInTimeline + 0.5);
       });
     });
 
     mm.add("(max-width: 1023px)", () => {
-      gsap.to(horizontalRef.current, {
+      const clampSkew = gsap.utils.clamp(-12, 12);
+      const clampScale = gsap.utils.clamp(0.96, 1.08);
+
+      const mainMobileTimeline = gsap.to(horizontalRef.current, {
         x: () => -(horizontalRef.current!.scrollWidth - window.innerWidth),
         ease: "none",
         scrollTrigger: { 
           trigger: containerRef.current, 
           pin: true, 
           scrub: 0.5, 
-          end: () => `+=${horizontalRef.current!.scrollWidth}` 
+          end: () => `+=${horizontalRef.current!.scrollWidth}`,
+          onUpdate: (self) => {
+            const velocity = self.getVelocity();
+            const skew = clampSkew(-velocity / 300);
+            const scale = clampScale(1 + Math.abs(velocity) / 6000);
+            
+            gsap.to(".mobile-card", {
+              skewX: skew,
+              scaleX: scale,
+              transformOrigin: velocity > 0 ? "right center" : "left center",
+              duration: 0.45,
+              ease: "power2.out",
+              overwrite: "auto"
+            });
+          },
+          onToggle: (self) => {
+            if (!self.isActive) {
+              gsap.to(".mobile-card", { skewX: 0, scaleX: 1, duration: 0.6, ease: "power2.out" });
+            }
+          }
         }
+      });
+
+      const mobileCards = gsap.utils.toArray<HTMLElement>(".mobile-card");
+      mobileCards.forEach((card) => {
+        const info = card.querySelector(".mobile-info-inner");
+        const img = card.querySelector(".img-portal");
+        
+        gsap.fromTo(info, 
+          { y: 35, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: card,
+              containerAnimation: mainMobileTimeline,
+              start: "left 85%",
+              end: "left 40%",
+              scrub: true,
+            }
+          }
+        );
+
+        gsap.fromTo(img,
+          { scale: 0.9, opacity: 0.6, rotateY: -10 },
+          {
+            scale: 1,
+            opacity: 1,
+            rotateY: 0,
+            duration: 0.8,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: card,
+              containerAnimation: mainMobileTimeline,
+              start: "left 90%",
+              end: "left 45%",
+              scrub: true,
+            }
+          }
+        );
       });
     });
 
@@ -498,189 +389,117 @@ export function PortfolioSection() {
   }, [hasMounted]);
 
   return (
-    <div ref={containerRef} className="portfolio-section-container relative w-full overflow-hidden bg-[#030303]">
+    <div 
+      ref={containerRef} 
+      className={`portfolio-section-container relative w-full overflow-hidden bg-[#030303] ${isDetailed ? "is-detailed" : ""}`}
+    >
       {hasMounted && <BackgroundCanvas active={isInView && !activeProject} />}
 
       {activeProject && (
         <ProjectDetail project={activeProject} onBack={handleBackToGrid} />
       )}
 
+      {/* DESKTOP VERSION */}
       <div className="hidden lg:block relative h-screen w-full">
         {PROJECTS.map((project, i) => (
-          <div 
+          <DesktopCard 
             key={project.id} 
-            className="desktop-card absolute inset-0 h-screen w-full flex overflow-hidden bg-gradient-to-b from-transparent to-[#030303] will-change-transform" 
-            style={{ zIndex: (i + 1) * 10, '--accent-color': project.accent } as React.CSSProperties}
-          >
-            <div className="circuit-bg-container absolute inset-0 w-full h-full opacity-35 pointer-events-none transition-opacity duration-1000 layer-optimized">
-              <svg className="w-full h-full" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 150H300L450 300H900L1000 200H1500L1580 280H1920" stroke="rgba(255,255,255,0.02)" strokeWidth="1.5" />
-                <path d="M1920 850H1600L1450 700H1100L950 850H400L300 750H0" stroke="rgba(255,255,255,0.02)" strokeWidth="1.5" />
-                <path d="M500 0V400L650 550V1080" stroke="rgba(255,255,255,0.01)" strokeWidth="1" />
-                <path d="M1400 1080V680L1250 530V0" stroke="rgba(255,255,255,0.01)" strokeWidth="1" />
-                
-                <path d="M0 450H200L320 570H750L820 500H1300L1420 620H1920" stroke="rgba(255,255,255,0.02)" strokeWidth="1.2" />
-                <path d="M150 1080V800L280 670H600L700 770V1080" stroke="rgba(255,255,255,0.015)" strokeWidth="1" />
-                <path d="M1750 0V350L1600 500H1150L1050 400V0" stroke="rgba(255,255,255,0.015)" strokeWidth="1" />
-                <path d="M960 0V250L900 310H450" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
-
-                <path className="pulse-line path-long" d="M0 150H300L450 300H900L1000 200H1500L1580 280H1920" stroke="var(--accent-color)" strokeWidth="2.5" strokeLinecap="round" />
-                <path className="pulse-line path-long delay-1" d="M1920 850H1600L1450 700H1100L950 850H400L300 750H0" stroke="var(--accent-color)" strokeWidth="2.5" strokeLinecap="round" />
-                <path className="pulse-line path-vert delay-2" d="M500 0V400L650 550V1080" stroke="var(--accent-color)" strokeWidth="1.5" strokeLinecap="round" />
-                <path className="pulse-line path-vert delay-3" d="M1400 1080V680L1250 530V0" stroke="var(--accent-color)" strokeWidth="1.5" strokeLinecap="round" />
-                
-                <path className="pulse-line path-mid delay-4" d="M0 450H200L320 570H750L820 500H1300L1420 620H1920" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" />
-                <path className="pulse-line path-vert delay-5" d="M150 1080V800L280 670H600L700 770V1080" stroke="var(--accent-color)" strokeWidth="1.5" strokeLinecap="round" />
-                <path className="pulse-line path-mid delay-6" d="M1750 0V350L1600 500H1150L1050 400V0" stroke="var(--accent-color)" strokeWidth="1.5" strokeLinecap="round" />
-
-                <circle cx="300" cy="150" r="4" fill="var(--accent-color)" className="circuit-dot" />
-                <circle cx="450" cy="300" r="4" fill="var(--accent-color)" className="circuit-dot" />
-                <circle cx="1000" cy="200" r="4" fill="var(--accent-color)" className="circuit-dot" />
-                <circle cx="1450" cy="700" r="4" fill="var(--accent-color)" className="circuit-dot" />
-                <circle cx="400" cy="850" r="4" fill="var(--accent-color)" className="circuit-dot" />
-                <circle cx="200" cy="450" r="3.5" fill="var(--accent-color)" className="circuit-dot dot-delay" />
-                <circle cx="320" cy="570" r="3.5" fill="var(--accent-color)" className="circuit-dot" />
-                <circle cx="820" cy="500" r="3.5" fill="var(--accent-color)" className="circuit-dot dot-delay" />
-                <circle cx="1420" cy="620" r="3.5" fill="var(--accent-color)" className="circuit-dot" />
-                <circle cx="280" cy="670" r="3" fill="var(--accent-color)" className="circuit-dot dot-delay" />
-                <circle cx="1600" cy="500" r="3" fill="var(--accent-color)" className="circuit-dot" />
-              </svg>
-            </div>
-
-            <div className="grid grid-cols-12 w-full h-full relative z-10 px-20 xl:px-32 items-center">
-              <div className="info-inner col-span-6 flex flex-col justify-center relative pr-12 border-r border-white/5">
-                <span className="text-[18rem] font-black text-white/[0.01] absolute -top-36 right-0 leading-none select-none italic font-mono">{project.id}</span>
-                
-                <h2 className="text-7xl xl:text-8xl font-black text-white leading-none tracking-tighter mb-6 shine-effect select-none">
-                  {project.title}
-                </h2>
-                
-                <p className="text-white/60 text-lg xl:text-xl font-light max-w-lg mb-10 leading-relaxed text-justify">
-                  {project.desc}
-                </p>
-
-                <button 
-                  onClick={(e) => handleExploreProject(project, i, e)}
-                  className="unique-btn group relative" 
-                  style={{ '--accent-color': project.accent } as React.CSSProperties}
-                >
-                  <span className="btn-content">
-                    EXPLORE PROJECT
-                    <svg className="w-5 h-5 mr-2 transform group-hover:translate-x-2 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </span>
-                </button>
-              </div>
-
-              <div className="col-span-6 flex items-center justify-end p-6 perspective-1000 relative">
-                <div className="img-portal relative w-[80%] aspect-[4/5] group transition-all duration-700 ease-out layer-optimized mt-16">
-                   
-                   <div className="lamp-container absolute top-0 left-0 w-full h-[50%] pointer-events-none z-20 flex flex-col items-center opacity-0 rounded-t-[2.5rem] overflow-hidden">
-                      <div className="lamp-emitter w-full h-[3px] transition-all duration-300" 
-                           style={{ 
-                             backgroundColor: "#ffffff", 
-                             boxShadow: `0 1px 15px 3px ${project.accent}, 0 2px 30px 6px ${project.accent}, inset 0 0 1px #fff` 
-                           }} 
-                      />
-                      <div className="light-cone absolute top-0 left-0 w-full h-full origin-top opacity-0" 
-                           style={{ 
-                             background: `linear-gradient(to bottom, ${project.accent}33 0%, ${project.accent}05 40%, transparent 100%)`,
-                             mixBlendMode: 'screen'
-                           }} 
-                      />
-                   </div>
-
-                   <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-transparent">
-                      <img src={project.img} className="w-full h-full object-cover scale-105 group-hover:scale-100 group-hover:rotate-1 transition-all duration-[1.5s] ease-out filter brightness-[0.7] group-hover:brightness-100 project-img" alt={project.title} />
-                      <div className="image-glow-overlay absolute inset-0 pointer-events-none opacity-0"
-                           style={{
-                             background: `linear-gradient(to bottom, #ffffff11 0%, ${project.accent}55 12%, ${project.accent}0a 35%, transparent 60%)`,
-                             mixBlendMode: 'color-dodge'
-                           }}
-                      />
-                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            project={project} 
+            index={i} 
+            onExplore={handleExploreProject} 
+          />
         ))}
       </div>
 
+      {/* MOBILE VERSION */}
       <div ref={horizontalRef} className="flex lg:hidden h-screen items-center px-6 gap-6 w-max relative z-10 layer-optimized">
-        {PROJECTS.map((project) => (
-          <div key={project.id} className="mobile-card w-[85vw] h-[70vh] shrink-0 rounded-[2.5rem] overflow-hidden border border-white/10 relative">
-            <img src={project.img} className="absolute inset-0 w-full h-full object-cover opacity-40" alt={project.title} />
-            <div className="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-black via-black/40 to-transparent">
-              <span className="text-xs font-mono tracking-widest text-white/40 mb-2">{project.id} / PROJECT</span>
-              <h3 className="text-4xl font-black text-white leading-none">{project.title}</h3>
-              <div className="w-16 h-[2px] mt-4" style={{ backgroundColor: project.accent }} />
-            </div>
-          </div>
+        {PROJECTS.map((project, i) => (
+          <MobileCard 
+            key={project.id} 
+            project={project} 
+            index={i} 
+            onExplore={handleExploreProject} 
+          />
         ))}
       </div>
 
-      <style jsx>{`
-        :global(.scrollbar-hide::-webkit-scrollbar) {
+      <style jsx global>{`
+        .portfolio-section-container .scrollbar-hide::-webkit-scrollbar {
           display: none !important;
         }
-        :global(.scrollbar-hide) {
+        .portfolio-section-container .scrollbar-hide {
           -ms-overflow-style: none !important;
           scrollbar-width: none !important;
         }
-        .container-optimized {
+        .portfolio-section-container .container-optimized {
           content-visibility: auto;
           contain-intrinsic-size: 500px;
         }
 
-        :global(.project-detail-container) {
+        .project-detail-container {
           opacity: 0;
           transform: scale(0.35);
           filter: blur(25px);
           will-change: transform, opacity, filter;
         }
 
-        .portfolio-webgl-bg,
-        .circuit-bg-container,
-        .desktop-card > .grid,
-        .mobile-card {
+        .portfolio-section-container .portfolio-webgl-bg,
+        .portfolio-section-container .circuit-bg-container,
+        .portfolio-section-container .desktop-card > .grid,
+        .portfolio-section-container .mobile-card {
           transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
         }
 
-        :global(body.is-nav-scrolling) .portfolio-webgl-bg,
-        :global(body.is-nav-scrolling) .circuit-bg-container,
-        :global(body.is-nav-scrolling) .desktop-card > .grid,
-        :global(body.is-nav-scrolling) .mobile-card {
+        body.is-nav-scrolling .portfolio-section-container .portfolio-webgl-bg,
+        body.is-nav-scrolling .portfolio-section-container .circuit-bg-container,
+        body.is-nav-scrolling .portfolio-section-container .desktop-card > .grid,
+        body.is-nav-scrolling .portfolio-section-container .mobile-card {
           opacity: 0 !important;
           visibility: hidden !important;
           transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
         }
 
-        .layer-optimized {
+        .portfolio-section-container.is-detailed .circuit-bg-container,
+        .portfolio-section-container.is-detailed .portfolio-webgl-bg,
+        .portfolio-section-container.is-detailed .desktop-card,
+        .portfolio-section-container.is-detailed .mobile-card {
+          visibility: hidden !important;
+          pointer-events: none !important;
+        }
+        .portfolio-section-container.is-detailed .pulse-line,
+        .portfolio-section-container.is-detailed .circuit-dot {
+          animation-play-state: paused !important;
+        }
+
+        .portfolio-section-container .layer-optimized {
           will-change: transform, opacity;
           transform: translateZ(0);
           backface-visibility: hidden;
         }
-        .desktop-card {
+        .portfolio-section-container .desktop-card {
           backface-visibility: hidden;
           transform-style: preserve-3d;
           will-change: transform, opacity;
           transform: translateZ(0);
         }
-        .img-portal, .info-inner {
+        .portfolio-section-container .img-portal, 
+        .portfolio-section-container .info-inner, 
+        .portfolio-section-container .mobile-info-inner {
           will-change: transform, opacity;
           transform: translateZ(0);
+          backface-visibility: hidden;
         }
 
-        .circuit-bg-container svg {
+        .portfolio-section-container .circuit-bg-container svg {
           transform: translateZ(0);
           contain: paint layout;
         }
-        .pulse-line, .circuit-dot {
+        .portfolio-section-container .pulse-line, 
+        .portfolio-section-container .circuit-dot {
           transform: translateZ(0);
           will-change: stroke-dashoffset, opacity;
         }
-        .shine-effect {
+        .portfolio-section-container .shine-effect {
           background: linear-gradient(90deg, #fff 0%, #555 25%, #fff 50%, #555 75%, #fff 100%);
           background-size: 200% auto;
           -webkit-background-clip: text;
@@ -688,54 +507,61 @@ export function PortfolioSection() {
           animation: shine 6s linear infinite;
         }
         @keyframes shine { to { background-position: 200% center; } }
-        .perspective-1000 { perspective: 1200px; }
+        .portfolio-section-container .perspective-1000 { perspective: 1200px; }
 
-        .pulse-line {
+        .portfolio-section-container .pulse-line {
           stroke-dashoffset: 0;
           animation: circuitFlow 7s linear infinite;
           opacity: 0.6;
           will-change: stroke-dashoffset;
         }
 
-        .path-long { stroke-dasharray: 200 1200; }
-        .path-mid { stroke-dasharray: 120 800; animation-duration: 5s; }
-        .path-vert { stroke-dasharray: 80 600; animation-duration: 6s; }
+        .portfolio-section-container .path-long { stroke-dasharray: 200 1200; }
+        .portfolio-section-container .path-mid { stroke-dasharray: 120 800; animation-duration: 5s; }
+        .portfolio-section-container .path-vert { stroke-dasharray: 80 600; animation-duration: 6s; }
 
-        .delay-1 { animation-delay: -1.5s; animation-direction: reverse; }
-        .delay-2 { animation-delay: -3s; }
-        .delay-3 { animation-delay: -4.5s; animation-direction: reverse; }
-        .delay-4 { animation-delay: -1s; }
-        .delay-5 { animation-delay: -2.5s; }
-        .delay-6 { animation-delay: -5s; animation-direction: reverse; }
+        .portfolio-section-container .delay-1 { animation-delay: -1.5s; animation-direction: reverse; }
+        .portfolio-section-container .delay-2 { animation-delay: -3s; }
+        .portfolio-section-container .delay-3 { animation-delay: -4.5s; animation-direction: reverse; }
+        .portfolio-section-container .delay-4 { animation-delay: -1s; }
+        .portfolio-section-container .delay-5 { animation-delay: -2.5s; }
+        .portfolio-section-container .delay-6 { animation-delay: -5s; animation-direction: reverse; }
 
         @keyframes circuitFlow {
           0% { stroke-dashoffset: 1400; }
           100% { stroke-dashoffset: 0; }
         }
 
-        .circuit-dot {
+        .portfolio-section-container .circuit-dot {
           animation: dotPulse 1.5s ease-in-out infinite alternate;
           will-change: opacity, r;
         }
-        .dot-delay { animation-delay: -0.75s; }
+        .portfolio-section-container .dot-delay { animation-delay: -0.75s; }
 
         @keyframes dotPulse {
           0% { opacity: 0.4; r: 2.5px; }
           100% { opacity: 1; r: 4.5px; }
         }
 
-        .lamp-emitter {
+        .portfolio-section-container .lamp-emitter {
           position: relative;
           z-index: 30;
         }
-        .light-cone {
+        .portfolio-section-container .light-cone {
           filter: blur(8px);
           pointer-events: none;
           transform-style: preserve-3d;
           will-change: opacity, transform;
         }
 
-        .unique-btn {
+        .portfolio-section-container .bg-grid-pattern {
+          background-size: 24px 24px;
+          background-image: 
+            linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        }
+
+        .portfolio-section-container .unique-btn {
           position: relative;
           width: fit-content;
           padding: 3px;
@@ -746,7 +572,7 @@ export function PortfolioSection() {
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
           will-change: transform;
         }
-        .unique-btn::before {
+        .portfolio-section-container .unique-btn::before {
           content: '';
           position: absolute;
           top: -50%;
@@ -758,7 +584,7 @@ export function PortfolioSection() {
           z-index: 1;
         }
         @keyframes rotateBtnBorder { 100% { transform: rotate(360deg); } }
-        .btn-content {
+        .portfolio-section-container .btn-content {
           position: relative;
           display: flex;
           align-items: center;
@@ -773,16 +599,16 @@ export function PortfolioSection() {
           z-index: 2;
           transition: all 0.3s ease;
         }
-        .unique-btn:hover {
+        .portfolio-section-container .unique-btn:hover {
           box-shadow: 0 0 35px var(--accent-color);
           transform: translateY(-2px);
         }
-        .unique-btn:hover .btn-content {
+        .portfolio-section-container .unique-btn:hover .btn-content {
           background: transparent;
           color: #000;
           font-weight: 900;
         }
-        .unique-btn:hover::before {
+        .portfolio-section-container .unique-btn:hover::before {
           background: var(--accent-color);
           animation: none;
         }

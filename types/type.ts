@@ -15,3 +15,14 @@ export interface MobileParticle {
   life: number;
   maxLife: number;
 }
+
+export interface Project {
+  id: string;
+  title: string;
+  color: string;
+  accent: string;
+  desc: string;
+  img: string;
+  link?: string;
+  gallery?: string[];
+}
