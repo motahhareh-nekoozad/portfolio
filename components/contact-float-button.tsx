@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import { useCreateSubmission } from "@/hooks/useCreateSubmission"; 
 
 interface ContactFloatButtonProps {
   onClick?: () => void;
@@ -18,9 +19,12 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
 
   // States related to the Contact Form
   const [formState, setFormState] = useState<"idle" | "transmitting" | "secured">("idle");
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [formData, setFormData] = useState({ name: "", contact_info: "", message: "" });
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [loadingStage, setLoadingStage] = useState("CONNECTING UPLINK");
+
+  const mutation = useCreateSubmission();
 
   // Floating Button Show/Hide animation
   useEffect(() => {
@@ -61,6 +65,23 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (formState !== "transmitting") return;
+    const stages = [
+      "ESTABLISHING SECURE LINK",
+      "ENCRYPTING PAYLOAD",
+      "TUNNELING PACKETS",
+      "DEPOSITING STREAM"
+    ];
+    let currentStage = 0;
+    const interval = setInterval(() => {
+      currentStage = (currentStage + 1) % stages.length;
+      setLoadingStage(stages[currentStage]);
+    }, 600);
+
+    return () => clearInterval(interval);
+  }, [formState]);
 
   // Linux Genie / Compiz Stretch & Retract (Zero-Translation, Pure Scale Deformation)
   useEffect(() => {
@@ -245,18 +266,28 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
 
   const handleSubmission = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) return;
+    if (!formData.name || !formData.contact_info || !formData.message) return;
 
     setFormState("transmitting");
     
-    setTimeout(() => {
-      setFormState("secured");
-      setTimeout(() => {
-        setFormData({ name: "", email: "", message: "" });
+    mutation.mutate({
+      name: formData.name,
+      contact_info: formData.contact_info,
+      description: formData.message 
+    }, {
+      onSuccess: () => {
+        setFormState("secured");
+        setTimeout(() => {
+          setFormData({ name: "", contact_info: "", message: "" });
+          setFormState("idle");
+          setIsOpen(false); 
+        }, 3500);
+      },
+      onError: (error) => {
         setFormState("idle");
-        setIsOpen(false); 
-      }, 3500);
-    }, 2500);
+        console.error("Transmission error:", error);
+      }
+    });
   };
 
   return (
@@ -410,13 +441,13 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
 
                 <div className="relative group/input">
                   <input
-                    type="email"
+                    type="text"
                     required
                     disabled={formState === "transmitting"}
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    value={formData.contact_info}
+                    onChange={(e) => handleInputChange("contact_info", e.target.value)}
                     className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-5 py-3.5 text-white text-xs tracking-wider placeholder-white/20 focus:outline-none focus:border-purple-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono disabled:opacity-40"
-                    placeholder="FREQUENCY GATEWAY / EMAIL"
+                    placeholder="FREQUENCY GATEWAY / CONTACT INFO"
                   />
                   <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-transparent group-focus-within/input:border-purple-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
                   <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-transparent group-focus-within/input:border-purple-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
@@ -442,12 +473,18 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
                   className="unique-btn group relative w-full" 
                   style={{ "--accent-color": formState === "transmitting" ? "#c084fc" : "#38bdf8" } as React.CSSProperties}
                 >
-                  <span className="btn-content w-full p-2 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[11px] py-4 transition-all duration-300">
+                  <span className="btn-content w-full p-2 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[11px] py-4 transition-all duration-300 min-h-[50px] overflow-hidden">
                     {formState === "transmitting" ? (
-                      <>
-                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                        TRANSMITTING DATA PACKET...
-                      </>
+                      <div className="flex items-center gap-2.5 animate-fade-in w-full justify-center relative">
+                        <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+                          <span className="absolute inset-0 rounded-full border border-dashed border-cyan-400/40 animate-spin" style={{ animationDuration: '3s' }} />
+                          <span className="absolute w-2.5 h-2.5 rounded-full border border-purple-400/60 animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
+                          <span className="w-1 h-1 rounded-full bg-cyan-400 animate-pulse" />
+                        </div>
+                        <span className="font-mono text-[9px] tracking-widest text-cyan-300 font-bold">{loadingStage}...</span>
+                        
+                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent btn-scan-line pointer-events-none" />
+                      </div>
                     ) : (
                       <>
                         Submit
@@ -547,6 +584,15 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(15px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scanHorizontal {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+
+        .btn-scan-line {
+          animation: scanHorizontal 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
       `}</style>
     </>

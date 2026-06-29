@@ -10,6 +10,8 @@ import SmoothScroll from "@/components/smooth-scroll";
 import CustomCursor from "@/hooks/custom-cursor";
 import Preloader from "@/components/preloader"; 
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"; 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -27,6 +29,14 @@ export default function RootLayout({
 }>) {
   const [showPreloader, setShowPreloader] = useState(true);
 
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false, 
+      },
+    },
+  }));
+
   return (
     <html
       lang="en"
@@ -34,18 +44,18 @@ export default function RootLayout({
       suppressHydrationWarning 
     >
     <body className="flex flex-col" suppressHydrationWarning>
-      
-      {showPreloader && <Preloader onComplete={() => setShowPreloader(false)} />}
-
-      <div id="scroll-cover" className="fixed inset-0 z-[9999] bg-[#030303] opacity-0 pointer-events-none transition-opacity duration-300" />
-      <CustomCursor />
-      
-      <SmoothScroll>
+      <QueryClientProvider client={queryClient}>
         
-        {children}
-        
+        {showPreloader && <Preloader onComplete={() => setShowPreloader(false)} />}
 
-      </SmoothScroll>
+        <div id="scroll-cover" className="fixed inset-0 z-[9999] bg-[#030303] opacity-0 pointer-events-none transition-opacity duration-300" />
+        <CustomCursor />
+        
+        <SmoothScroll>
+          {children}
+        </SmoothScroll>
+
+      </QueryClientProvider>
     </body>
     </html>
   );

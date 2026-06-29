@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useCreateSubmission } from "@/hooks/useCreateSubmission";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -13,15 +14,36 @@ export default function ContactSection() {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const [formState, setFormState] = useState<"idle" | "transmitting" | "secured">("idle");
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [formData, setFormData] = useState({ name: "", contact_info: "", message: "" });
   const [isTyping, setIsTyping] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  
+  const [loadingStage, setLoadingStage] = useState("ESTABLISHING LINK");
+
+  const mutation = useCreateSubmission();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768);
     }
   }, []);
+
+  useEffect(() => {
+    if (formState !== "transmitting") return;
+    const stages = [
+      "ESTABLISHING SECURE GATEWAY",
+      "ENCRYPTING PAYLOAD [AES-256]",
+      "TRANSMITTING SUBMISSION PACKET",
+      "AWAITING DEPOSIT CONFIRMATION"
+    ];
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % stages.length;
+      setLoadingStage(stages[currentIndex]);
+    }, 700);
+
+    return () => clearInterval(interval);
+  }, [formState]);
 
   useGSAP(() => {
     gsap.from(".reveal-contact-item", {
@@ -122,17 +144,27 @@ export default function ContactSection() {
 
   const handleSubmission = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) return;
+    if (!formData.name || !formData.contact_info || !formData.message) return;
 
     setFormState("transmitting");
     
-    setTimeout(() => {
-      setFormState("secured");
-      setTimeout(() => {
-        setFormData({ name: "", email: "", message: "" });
+    mutation.mutate({
+      name: formData.name,
+      contact_info: formData.contact_info,   
+      description: formData.message   
+    }, {
+      onSuccess: () => {
+        setFormState("secured");
+        setTimeout(() => {
+          setFormData({ name: "", contact_info: "", message: "" });
+          setFormState("idle");
+        }, 4000);
+      },
+      onError: (err) => {
         setFormState("idle");
-      }, 4000);
-    }, 2800);
+        console.error("Uplink failed:", err);
+      }
+    });
   };
 
   return (
@@ -174,12 +206,6 @@ export default function ContactSection() {
               </h2>
               <p className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase font-mono leading-relaxed">درگاهی امن برای مخابره پیام‌ها و ایده‌های فرکانس بالا.</p>
             </div>
-            
-            {/* نشانگر وضعیت شبکه برای مچ شدن با یوآی موبایل و دسکتاپ */}
-            {/* <div className="flex items-center gap-2 border border-cyan-500/25 bg-cyan-500/5 px-3 py-1 rounded-full backdrop-blur-md self-start sm:self-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
-              <span className="text-[8px] md:text-[9px] font-mono tracking-widest text-cyan-400/90 font-bold uppercase">LINK SECURE</span>
-            </div> */}
           </div>
 
           {formState === "secured" ? (
@@ -199,7 +225,7 @@ export default function ContactSection() {
                 <input
                   type="text"
                   required
-                  disabled={formState === "transmitting"}
+                  disabled={mutation.isPending}
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-4 py-3.5 md:px-5 md:py-4 text-white text-xs md:text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-cyan-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono disabled:opacity-40"
@@ -211,13 +237,13 @@ export default function ContactSection() {
 
               <div className="relative group/input">
                 <input
-                  type="email"
+                  type="number"
                   required
-                  disabled={formState === "transmitting"}
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  disabled={mutation.isPending}
+                  value={formData.contact_info}
+                  onChange={(e) => handleInputChange("contact_info", e.target.value)}
                   className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-4 py-3.5 md:px-5 md:py-4 text-white text-xs md:text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-purple-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono disabled:opacity-40"
-                  placeholder="FREQUENCY GATEWAY / EMAIL"
+                  placeholder="FREQUENCY GATEWAY / Phone Number"
                 />
                 <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-transparent group-focus-within/input:border-purple-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-transparent group-focus-within/input:border-purple-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
@@ -227,7 +253,7 @@ export default function ContactSection() {
                 <textarea
                   rows={4}
                   required
-                  disabled={formState === "transmitting"}
+                  disabled={mutation.isPending}
                   value={formData.message}
                   onChange={(e) => handleInputChange("message", e.target.value)}
                   className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-4 py-3.5 md:px-5 md:py-4 text-white text-xs md:text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-cyan-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono resize-none disabled:opacity-40"
@@ -239,16 +265,26 @@ export default function ContactSection() {
 
               <button 
                 type="submit"
-                disabled={formState === "transmitting"}
-                className={`unique-btn group relative w-full ${formState === "transmitting" ? "cursor-wait" : ""}`} 
-                style={{ "--accent-color": formState === "transmitting" ? "#c084fc" : "#38bdf8" } as React.CSSProperties}
+                disabled={mutation.isPending}
+                className={`unique-btn group relative w-full ${mutation.isPending ? "cursor-wait" : ""}`} 
+                style={{ "--accent-color": mutation.isPending ? "#c084fc" : "#38bdf8" } as React.CSSProperties}
               >
-                <span className="btn-content w-full p-2 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] md:text-xs py-3.5 md:py-4 transition-all duration-300">
-                  {formState === "transmitting" ? (
-                    <>
-                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                      TRANSMITTING DATA PACKET...
-                    </>
+                <span className="btn-content w-full p-2 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] md:text-xs py-3.5 md:py-4 transition-all duration-300 min-h-[50px] relative overflow-hidden">
+                  {mutation.isPending ? (
+                    <div className="flex items-center gap-4 animate-fade-in w-full justify-center relative z-10">
+                      <div className="relative w-4 h-4 shrink-0">
+                        <span className="absolute inset-0 rounded-full border border-t-cyan-400 border-r-transparent border-b-purple-400 border-l-transparent animate-spin" style={{ animationDuration: '0.8s' }} />
+                        <span className="absolute inset-0.5 rounded-full border border-t-transparent border-r-pink-500 border-b-transparent border-l-cyan-300 animate-spin" style={{ animationDuration: '1.2s', animationDirection: 'reverse' }} />
+                        <span className="absolute top-1.5 left-1.5 w-1 h-1 rounded-full bg-white animate-ping" />
+                      </div>
+                      
+                      <div className="flex flex-col items-start font-mono text-[9px] tracking-widest text-cyan-400 leading-none text-left">
+                        <span className="font-bold">{loadingStage}</span>
+                        <span className="text-white/40 text-[6px] mt-1 tracking-wider uppercase">UPLINK ACTIVE // DAT_TX</span>
+                      </div>
+                      
+                      <span className="btn-scanning-glow" />
+                    </div>
                   ) : (
                     <>
                       Submit
@@ -259,6 +295,12 @@ export default function ContactSection() {
                   )}
                 </span>
               </button>
+
+              {mutation.isError && (
+                <div className="text-red-400/90 text-[10px] font-mono tracking-wider text-center mt-2 uppercase animate-pulse border border-red-500/20 bg-red-950/10 p-2.5 rounded-xl">
+                  [UPLINK ERROR] Transmission failed. Please verify frequency settings and retry.
+                </div>
+              )}
             </form>
           )}
         </div>
@@ -459,6 +501,19 @@ export default function ContactSection() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(15px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes btnScan {
+          0% { left: -100%; }
+          100% { left: 100%; }
+        }
+        .btn-scanning-glow {
+          position: absolute;
+          top: 0;
+          width: 50%;
+          height: 100%;
+          background: linear-gradient(to right, transparent, rgba(56, 189, 248, 0.15), transparent);
+          animation: btnScan 1.5s infinite linear;
         }
       `}</style>
     </section>
