@@ -18,7 +18,7 @@ export default function ContactSection() {
   const [isTyping, setIsTyping] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   
-  const [loadingStage, setLoadingStage] = useState("ESTABLISHING LINK");
+  const [loadingStage, setLoadingStage] = useState("INITIALIZING REQUEST");
 
   const mutation = useCreateSubmission();
 
@@ -30,11 +30,12 @@ export default function ContactSection() {
 
   useEffect(() => {
     if (formState !== "transmitting") return;
+    
     const stages = [
-      "ESTABLISHING SECURE GATEWAY",
-      "ENCRYPTING PAYLOAD [AES-256]",
-      "TRANSMITTING SUBMISSION PACKET",
-      "AWAITING DEPOSIT CONFIRMATION"
+      "ESTABLISHING API HANDSHAKE",
+      "SERIALIZING REQUEST PAYLOAD",
+      "DISPATCHING HTTP POST REQUEST",
+      "AWAITING SERVER RESPONSE"
     ];
     let currentIndex = 0;
     const interval = setInterval(() => {
@@ -60,32 +61,6 @@ export default function ContactSection() {
       clearProps: "all", 
       force3D: true,
     });
-
-    if (!window.matchMedia("(pointer: coarse)").matches) {
-      gsap.to(".glowing-pulse-bg-1", {
-        x: "15%",
-        y: "-10%",
-        scale: 1.25,
-        opacity: 0.6,
-        duration: 8,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      });
-
-      gsap.to(".glowing-pulse-bg-2", {
-        x: "-10%",
-        y: "15%",
-        scale: 1.2,
-        opacity: 0.5,
-        duration: 6,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      });
-    } else {
-      gsap.set(".glowing-pulse-bg-1, .glowing-pulse-bg-2", { opacity: 0.35 });
-    }
   }, { scope: containerRef });
 
   useEffect(() => {
@@ -102,8 +77,11 @@ export default function ContactSection() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    card.style.setProperty("--mouse-x", `${x}px`);
-    card.style.setProperty("--mouse-y", `${y}px`);
+    requestAnimationFrame(() => {
+      if (!card) return;
+      card.style.setProperty("--mouse-x", `${x}px`);
+      card.style.setProperty("--mouse-y", `${y}px`);
+    });
 
     const tiltX = -((y - rect.height / 2) / (rect.height / 2)) * 4; 
     const tiltY = ((x - rect.width / 2) / (rect.width / 2)) * 4; 
@@ -112,8 +90,9 @@ export default function ContactSection() {
       rotateX: tiltX,
       rotateY: tiltY,
       transformPerspective: 1000,
-      duration: 0.3,
-      ease: "power2.out"
+      duration: 0.25,
+      ease: "power2.out",
+      overwrite: "auto" 
     });
   };
 
@@ -124,8 +103,9 @@ export default function ContactSection() {
     gsap.to(card, {
       rotateX: 0,
       rotateY: 0,
-      duration: 0.6,
-      ease: "power2.out"
+      duration: 0.5,
+      ease: "power2.out",
+      overwrite: "auto"
     });
   };
 
@@ -162,7 +142,7 @@ export default function ContactSection() {
       },
       onError: (err) => {
         setFormState("idle");
-        console.error("Uplink failed:", err);
+        console.error("Connection failed:", err);
       }
     });
   };
@@ -177,8 +157,8 @@ export default function ContactSection() {
       <div className="absolute inset-0 cyber-grid opacity-25 md:opacity-35 pointer-events-none" />
       <div className="absolute inset-0 scanline-effect pointer-events-none" />
 
-      <div className="absolute top-1/4 left-1/4 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-purple-600/10 md:bg-purple-600/15 rounded-full blur-[80px] md:blur-[130px] pointer-events-none glowing-pulse-bg-1 opacity-40 md:opacity-50 mix-blend-screen will-change-transform" />
-      <div className="absolute bottom-1/4 right-1/4 w-[280px] md:w-[550px] h-[280px] md:h-[550px] bg-cyan-500/10 md:bg-cyan-500/15 rounded-full blur-[70px] md:blur-[120px] pointer-events-none glowing-pulse-bg-2 opacity-30 md:opacity-40 mix-blend-screen will-change-transform" />
+      <div className="absolute top-1/4 left-1/4 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-purple-600/10 md:bg-purple-600/15 rounded-full blur-[80px] md:blur-[130px] pointer-events-none glowing-pulse-bg-1 opacity-40 md:opacity-50 mix-blend-screen" />
+      <div className="absolute bottom-1/4 right-1/4 w-[280px] md:w-[550px] h-[280px] md:h-[550px] bg-cyan-500/10 md:bg-cyan-500/15 rounded-full blur-[70px] md:blur-[120px] pointer-events-none glowing-pulse-bg-2 opacity-30 md:opacity-40 mix-blend-screen" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] md:w-[750px] h-[350px] md:h-[750px] bg-pink-500/5 md:bg-pink-500/10 rounded-full blur-[100px] md:blur-[160px] pointer-events-none opacity-20" />
 
       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
@@ -188,7 +168,7 @@ export default function ContactSection() {
         <div 
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
-          className="reveal-contact-item lg:col-span-6 bg-gradient-to-br from-white/[0.04] via-[#100d28]/70 to-black/40 border border-white/10 rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] relative group/terminal transition-all duration-300 hover:border-cyan-500/30 overflow-hidden"
+          className="reveal-contact-item lg:col-span-6 bg-gradient-to-br from-white/[0.04] via-[#100d28]/70 to-black/40 border border-white/10 rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] relative group/terminal transition-all duration-300 hover:border-cyan-500/30 overflow-hidden [will-change:transform]"
         >
           {!isTouchDevice && (
             <div className="absolute inset-0 opacity-0 group-hover/terminal:opacity-100 transition-opacity duration-500 pointer-events-none bg-[radial-gradient(500px_circle_at_var(--mouse-x,_0px)_var(--mouse-y,_0px),_rgba(34,211,238,0.08),_transparent_80%)]" />
@@ -202,9 +182,9 @@ export default function ContactSection() {
           <div className="mb-8 md:mb-10 mt-2 relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter leading-none mb-3">
-                INITIALIZE <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">UPLINK</span>
+                START A <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">PROJECT</span>
               </h2>
-              <p className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase font-mono leading-relaxed">درگاهی امن برای مخابره پیام‌ها و ایده‌های فرکانس بالا.</p>
+              <p className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase font-mono leading-relaxed">درگاهی برای ارسال اطلاعات پروژه و برقراری ارتباط سریع با تیم توسعه.</p>
             </div>
           </div>
 
@@ -215,8 +195,8 @@ export default function ContactSection() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h3 className="text-lg md:text-xl font-bold tracking-widest text-[#10b981] uppercase font-mono mb-2">DATA STREAM SECURED</h3>
-              <p className="text-white/50 text-[11px] md:text-xs max-w-sm leading-relaxed px-4">بسته‌ اطلاعاتی با موفقیت رمزگذاری و در پایگاه داده فرود آمد. پاسخ به زودی روی فرکانس شما ارسال خواهد شد.</p>
+              <h3 className="text-lg md:text-xl font-bold tracking-widest text-[#10b981] uppercase font-mono mb-2">RESPONSE RECEIVED</h3>
+              <p className="text-white/50 text-[11px] md:text-xs max-w-sm leading-relaxed px-4">اطلاعات شما با موفقیت در پایگاه داده ثبت شد. به زودی از طرف تیم ما با شما تماس گرفته خواهد شد.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmission} className="space-y-4 md:space-y-6 relative z-10">
@@ -237,13 +217,13 @@ export default function ContactSection() {
 
               <div className="relative group/input">
                 <input
-                  type="number"
+                  type="tel" /* تغییر به استاندارد tel برای حفظ صفر و کاراکترهای خاص شماره تماس */
                   required
                   disabled={mutation.isPending}
                   value={formData.contact_info}
                   onChange={(e) => handleInputChange("contact_info", e.target.value)}
                   className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-4 py-3.5 md:px-5 md:py-4 text-white text-xs md:text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-purple-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono disabled:opacity-40"
-                  placeholder="FREQUENCY GATEWAY / Phone Number"
+                  placeholder="CONTACT INFO / Phone Number"
                 />
                 <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-transparent group-focus-within/input:border-purple-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-transparent group-focus-within/input:border-purple-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
@@ -257,7 +237,7 @@ export default function ContactSection() {
                   value={formData.message}
                   onChange={(e) => handleInputChange("message", e.target.value)}
                   className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-4 py-3.5 md:px-5 md:py-4 text-white text-xs md:text-sm tracking-wider placeholder-white/20 focus:outline-none focus:border-cyan-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono resize-none disabled:opacity-40"
-                  placeholder="ENCRYPT MESSAGE / PROJECT DETAILS..."
+                  placeholder="PROJECT DETAILS / MESSAGE..."
                 />
                 <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-transparent group-focus-within/input:border-cyan-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-transparent group-focus-within/input:border-cyan-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
@@ -280,7 +260,7 @@ export default function ContactSection() {
                       
                       <div className="flex flex-col items-start font-mono text-[9px] tracking-widest text-cyan-400 leading-none text-left">
                         <span className="font-bold">{loadingStage}</span>
-                        <span className="text-white/40 text-[6px] mt-1 tracking-wider uppercase">UPLINK ACTIVE // DAT_TX</span>
+                        <span className="text-white/40 text-[6px] mt-1 tracking-wider uppercase">API UPLINK // HTTP_POST</span>
                       </div>
                       
                       <span className="btn-scanning-glow" />
@@ -298,7 +278,7 @@ export default function ContactSection() {
 
               {mutation.isError && (
                 <div className="text-red-400/90 text-[10px] font-mono tracking-wider text-center mt-2 uppercase animate-pulse border border-red-500/20 bg-red-950/10 p-2.5 rounded-xl">
-                  [UPLINK ERROR] Transmission failed. Please verify frequency settings and retry.
+                  [REQUEST FAILED] HTTP status error. Please check your connection and try again.
                 </div>
               )}
             </form>
@@ -345,7 +325,7 @@ export default function ContactSection() {
             <div 
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              className="reveal-contact-item flex items-center gap-4 md:gap-5 bg-gradient-to-r from-white/[0.03] to-[#120f2b]/70 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/40 hover:bg-[#131032]/75 group/card shadow-lg relative overflow-hidden"
+              className="reveal-contact-item flex items-center gap-4 md:gap-5 bg-gradient-to-r from-white/[0.03] to-[#120f2b]/70 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/40 hover:bg-[#131032]/75 group/card shadow-lg relative overflow-hidden [will-change:transform]"
             >
               {!isTouchDevice && (
                 <div className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none bg-[radial-gradient(350px_circle_at_var(--mouse-x,_0px)_var(--mouse-y,_0px),_rgba(34,211,238,0.08),_transparent_80%)]" />
@@ -366,7 +346,7 @@ export default function ContactSection() {
             <div 
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              className="reveal-contact-item flex items-center gap-4 md:gap-5 bg-gradient-to-r from-white/[0.03] to-[#120f2b]/70 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-md transition-all duration-300 hover:border-purple-400/40 hover:bg-[#131032]/75 group/card shadow-lg relative overflow-hidden"
+              className="reveal-contact-item flex items-center gap-4 md:gap-5 bg-gradient-to-r from-white/[0.03] to-[#120f2b]/70 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-md transition-all duration-300 hover:border-purple-400/40 hover:bg-[#131032]/75 group/card shadow-lg relative overflow-hidden [will-change:transform]"
             >
               {!isTouchDevice && (
                 <div className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none bg-[radial-gradient(350px_circle_at_var(--mouse-x,_0px)_var(--mouse-y,_0px),_rgba(168,132,252,0.08),_transparent_80%)]" />
@@ -399,14 +379,10 @@ export default function ContactSection() {
           will-change: transform;
         }
 
-        @keyframes scanline {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(100vh); }
-        }
         .scanline-effect {
           background: linear-gradient(to bottom, transparent, rgba(56, 189, 248, 0.03), transparent);
-          animation: scanline 10s linear infinite;
           transform: translate3d(0,0,0);
+          will-change: transform;
         }
 
         @keyframes contactPulse {
@@ -434,6 +410,12 @@ export default function ContactSection() {
         }
         .contact-pulse-fast {
           animation-duration: 1s !important;
+        }
+
+        .glowing-pulse-bg-1, .glowing-pulse-bg-2 {
+          will-change: transform, opacity;
+          transform: translateZ(0);
+          backface-visibility: hidden;
         }
 
         .unique-btn {

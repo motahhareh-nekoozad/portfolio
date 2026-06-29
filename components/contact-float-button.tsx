@@ -22,7 +22,8 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
   const [formData, setFormData] = useState({ name: "", contact_info: "", message: "" });
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [loadingStage, setLoadingStage] = useState("CONNECTING UPLINK");
+  
+  const [loadingStage, setLoadingStage] = useState("INITIALIZING REQUEST");
 
   const mutation = useCreateSubmission();
 
@@ -68,11 +69,12 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
 
   useEffect(() => {
     if (formState !== "transmitting") return;
+    
     const stages = [
-      "ESTABLISHING SECURE LINK",
-      "ENCRYPTING PAYLOAD",
-      "TUNNELING PACKETS",
-      "DEPOSITING STREAM"
+      "ESTABLISHING API HANDSHAKE",
+      "SERIALIZING REQUEST PAYLOAD",
+      "DISPATCHING HTTP POST REQUEST",
+      "AWAITING SERVER RESPONSE"
     ];
     let currentStage = 0;
     const interval = setInterval(() => {
@@ -409,7 +411,7 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
               <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-none mb-3 text-left" dir="ltr">
                 INITIALIZE <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">UPLINK</span>
               </h2>
-              <p className="text-white/50 text-[10px] tracking-wider uppercase font-mono leading-relaxed">درگاهی امن برای مخابره پیام‌ها و ایده‌های فرکانس بالا.</p>
+              <p className="text-white/50 text-[10px] tracking-wider uppercase font-mono leading-relaxed">درگاهی برای ارسال اطلاعات پروژه و برقراری ارتباط سریع با تیم توسعه.</p>
             </div>
 
             {formState === "secured" ? (
@@ -419,8 +421,8 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold tracking-widest text-[#10b981] uppercase font-mono mb-2">DATA STREAM SECURED</h3>
-                <p className="text-white/50 text-[11px] max-w-sm leading-relaxed">بسته‌ اطلاعاتی با موفقیت رمزگذاری و در پایگاه داده فرود آمد. پاسخ به زودی روی فرکانس شما ارسال خواهد شد.</p>
+                <h3 className="text-lg font-bold tracking-widest text-[#10b981] uppercase font-mono mb-2">RESPONSE RECEIVED</h3>
+                <p className="text-white/50 text-[11px] max-w-sm leading-relaxed">اطلاعات شما با موفقیت در پایگاه داده ثبت شد. به زودی از طرف تیم توسعه با شما تماس خواهیم گرفت.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmission} className="space-y-5 relative z-10">
@@ -447,7 +449,7 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
                     value={formData.contact_info}
                     onChange={(e) => handleInputChange("contact_info", e.target.value)}
                     className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-5 py-3.5 text-white text-xs tracking-wider placeholder-white/20 focus:outline-none focus:border-purple-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono disabled:opacity-40"
-                    placeholder="FREQUENCY GATEWAY / CONTACT INFO"
+                    placeholder="CONTACT INFO / Phone Number"
                   />
                   <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-transparent group-focus-within/input:border-purple-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
                   <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-transparent group-focus-within/input:border-purple-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
@@ -461,7 +463,7 @@ export default function ContactFloatButton({ onClick }: ContactFloatButtonProps)
                     value={formData.message}
                     onChange={(e) => handleInputChange("message", e.target.value)}
                     className="w-full bg-[#0c091f]/50 border border-white/10 rounded-xl px-5 py-3.5 text-white text-xs tracking-wider placeholder-white/20 focus:outline-none focus:border-cyan-400 focus:bg-[#0f0b29] transition-all duration-300 font-mono resize-none disabled:opacity-40"
-                    placeholder="ENCRYPT MESSAGE / PROJECT DETAILS..."
+                    placeholder="PROJECT DETAILS / MESSAGE..."
                   />
                   <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-transparent group-focus-within/input:border-cyan-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
                   <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-transparent group-focus-within/input:border-cyan-400 group-focus-within/input:w-3.5 group-focus-within/input:h-3.5 transition-all duration-300" />
