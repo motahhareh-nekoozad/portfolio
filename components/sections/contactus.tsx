@@ -187,7 +187,6 @@ export default function ContactSection() {
               <p className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase font-mono leading-relaxed">درگاهی برای ارسال اطلاعات پروژه و برقراری ارتباط سریع با تیم توسعه.</p>
             </div>
           </div>
-
           {formState === "secured" ? (
             <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in relative z-10">
               <div className="relative w-16 h-16 md:w-20 md:h-20 mb-6 flex items-center justify-center rounded-full border border-[#10b981]/50 bg-[#10b981]/5 shadow-[0_0_35px_rgba(16,185,129,0.4)]">
