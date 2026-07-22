@@ -1,12 +1,22 @@
 // app/page.tsx
-import HeroSection from '@/components/sections/hero';
-import { PortfolioSection } from "@/components/sections/portfolio";
+import dynamic from "next/dynamic";
+import HeroSection from "@/components/sections/hero";
 import Navbar from "@/components/navbar";
-import CustomCursor from '@/hooks/custom-cursor';
-import ScrollSpy from '@/components/scroll-spy';
-import ContactSection from '@/components/sections/contactus';
-import AboutSection from '@/components/sections/aboutus';
-import ContactFloatButton from '@/components/contact-float-button';
+import ScrollSpy from "@/components/scroll-spy";
+import ContactFloatButton from "@/components/contact-float-button";
+
+const PortfolioSection = dynamic(
+  () => import("@/components/sections/portfolio").then((m) => ({ default: m.PortfolioSection })),
+  { ssr: true }
+);
+
+const AboutSection = dynamic(() => import("@/components/sections/aboutus"), {
+  ssr: true,
+});
+
+const ContactSection = dynamic(() => import("@/components/sections/contactus"), {
+  ssr: true,
+});
 
 export default function Home() {
   const activeSections = [
@@ -18,9 +28,8 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen">
-      <div className="noise-overlay" /> 
-      <CustomCursor /> 
-      
+      <div className="noise-overlay" />
+
       <ScrollSpy sections={activeSections} />
           <Navbar />
 

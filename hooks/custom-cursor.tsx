@@ -84,6 +84,7 @@ export default function CustomCursor() {
     };
 
     const onMouseMove = (e: MouseEvent) => {
+      if (document.hidden) return;
       current.mouse.x = e.clientX;
       current.mouse.y = e.clientY;
       
@@ -130,8 +131,17 @@ export default function CustomCursor() {
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
 
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        gsap.ticker.remove(updateCursor);
+        isTicking = false;
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       gsap.ticker.remove(updateCursor);
       document.body.style.cursor = "auto";
     };

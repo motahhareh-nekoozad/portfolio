@@ -86,7 +86,7 @@ export const GlobalMercuryBackground = memo(() => {
   });
 
   return (
-    <Plane args={[viewport.width * 2, viewport.height * 2, 8, 8]} ref={meshRef}>
+    <Plane args={[viewport.width * 2, viewport.height * 2, 6, 6]} ref={meshRef}>
       <MeshDistortMaterial
         ref={materialRef}
         speed={1}
@@ -101,9 +101,11 @@ export const GlobalMercuryBackground = memo(() => {
 GlobalMercuryBackground.displayName = "GlobalMercuryBackground";
 
 export const BackgroundCanvas = memo(({ active }: { active: boolean }) => {
+  const dpr = typeof window !== "undefined" ? Math.min(window.devicePixelRatio || 1, 1.5) : 1;
+
   return (
     <div 
-      className="portfolio-webgl-bg hidden lg:block fixed inset-0 z-0 pointer-events-none opacity-0 will-change-transform"
+      className="portfolio-webgl-bg enhanced-canvas hidden lg:block fixed inset-0 z-0 pointer-events-none opacity-0 will-change-transform"
       style={{ visibility: active ? "visible" : "hidden" }}
     >
       <Canvas 
@@ -117,7 +119,7 @@ export const BackgroundCanvas = memo(({ active }: { active: boolean }) => {
           depth: false,
           failIfMajorPerformanceCaveat: true
         }}
-        dpr={1}
+        dpr={dpr}
       >
         <ambientLight intensity={1.2} />
         <directionalLight position={[4, 4, 3]} intensity={2.5} color="#ffffff" />

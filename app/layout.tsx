@@ -1,62 +1,39 @@
-// app/layout.tsx
-"use client"; 
-import React, { useState } from "react";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-import "@/lib/gsap-setup"; 
-
-import SmoothScroll from "@/components/smooth-scroll";
-import CustomCursor from "@/hooks/custom-cursor";
-import Preloader from "@/components/preloader"; 
-
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"; 
+import { Providers } from "@/components/providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
+
+export const metadata: Metadata = {
+  title: "Portfolio",
+  description: "Unfolding Future Portfolio",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [showPreloader, setShowPreloader] = useState(true);
-
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        refetchOnWindowFocus: false, 
-      },
-    },
-  }));
-
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      suppressHydrationWarning 
+      suppressHydrationWarning
     >
-    <body className="flex flex-col" suppressHydrationWarning>
-      <QueryClientProvider client={queryClient}>
-        
-        {showPreloader && <Preloader onComplete={() => setShowPreloader(false)} />}
-
-        <div id="scroll-cover" className="fixed inset-0 z-[9999] bg-[#030303] opacity-0 pointer-events-none transition-opacity duration-300" />
-        <CustomCursor />
-        
-        <SmoothScroll>
-          {children}
-        </SmoothScroll>
-
-      </QueryClientProvider>
-    </body>
+      <body className="flex flex-col" suppressHydrationWarning>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useLenis } from 'lenis/react';
+import { useLenis } from "lenis/react";
+import { useActiveSection } from "@/hooks/useActiveSection";
 
 interface Section {
   id: string;
@@ -21,7 +22,7 @@ const defaultSections: Section[] = [
 ];
 
 export default function ScrollSpy({ sections = defaultSections }: ScrollSpyProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const { activeIndex } = useActiveSection(sections.map((s) => s.id));
   const containerRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
   const lenis = useLenis();
@@ -63,57 +64,6 @@ export default function ScrollSpy({ sections = defaultSections }: ScrollSpyProps
       window.removeEventListener("project-back", handleShow);
     };
   }, []);
-
-  useEffect(() => {
-    let cachedOffsets: number[] = [];
-
-    const calculateOffsets = () => {
-      cachedOffsets = sections.map((sec) => {
-        const el = document.getElementById(sec.id);
-        if (!el) return 0;
-        
-        const originalPos = el.style.position;
-        el.style.position = "relative";
-        
-        let top = 0;
-        let parent: HTMLElement | null = el;
-        while (parent) {
-          top += parent.offsetTop;
-          parent = parent.offsetParent as HTMLElement | null;
-        }
-        
-        el.style.position = originalPos;
-        return top;
-      });
-    };
-
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      let currentIdx = 0;
-      const offsetMargin = 120;
-
-      for (let i = 0; i < cachedOffsets.length; i++) {
-        if (scrollY >= cachedOffsets[i] - offsetMargin) {
-          currentIdx = i;
-        }
-      }
-      setActiveIndex(currentIdx);
-    };
-
-    const timeoutId = setTimeout(() => {
-      calculateOffsets();
-      handleScroll();
-    }, 600);
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", calculateOffsets, { passive: true });
-
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", calculateOffsets);
-    };
-  }, [sections]);
 
   useEffect(() => {
     if (indicatorRef.current && containerRef.current) {

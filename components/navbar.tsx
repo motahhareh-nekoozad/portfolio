@@ -1,72 +1,22 @@
 "use client";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useLenis } from 'lenis/react';
+import { useLenis } from "lenis/react";
+import { useActiveSection } from "@/hooks/useActiveSection";
 
 export default function Navbar() {
   const navRef = useRef<HTMLElement>(null);
   const mobileNavRef = useRef<HTMLElement>(null);
   const lenis = useLenis();
 
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [progressPercent, setProgressPercent] = useState(0);
-
-  useEffect(() => {
-    const sections = ["hero", "portfolio", "about", "contact"];
-    let cachedOffsets: number[] = [];
-
-    const calculateOffsets = () => {
-      cachedOffsets = sections.map((id) => {
-        const el = document.getElementById(id);
-        if (!el) return 0;
-        const originalPos = el.style.position;
-        el.style.position = "relative";
-        let top = 0;
-        let parent: HTMLElement | null = el;
-        while (parent) {
-          top += parent.offsetTop;
-          parent = parent.offsetParent as HTMLElement | null;
-        }
-        el.style.position = originalPos;
-        return top;
-      });
-    };
-
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      
-      let currentIdx = 0;
-      const offsetMargin = 120;
-      for (let i = 0; i < cachedOffsets.length; i++) {
-        if (scrollY >= cachedOffsets[i] - offsetMargin) {
-          currentIdx = i;
-        }
-      }
-      setActiveIndex(currentIdx);
-
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (docHeight > 0) {
-        const pct = (scrollY / docHeight) * 100;
-        setProgressPercent(Math.min(100, Math.max(0, pct)));
-      }
-    };
-
-    const timeoutId = setTimeout(() => {
-      calculateOffsets();
-      handleScroll();
-    }, 600);
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", calculateOffsets, { passive: true });
-
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", calculateOffsets);
-    };
-  }, []);
+  const { activeIndex, progressPercent } = useActiveSection([
+    "hero",
+    "portfolio",
+    "about",
+    "contact",
+  ]);
 
   useGSAP(() => {
     gsap.from(navRef.current, {

@@ -48,6 +48,8 @@
     pointer-events: none;
     z-index: 50;
     mix-blend-mode: overlay;
+    contain: strict;
+    transform: translateZ(0);
   }
 
   .glass-card {
@@ -63,8 +65,10 @@
   }
 }
 
-canvas {
+.enhanced-canvas {
   filter: saturate(1.5) brightness(1.2) contrast(1.1);
+  transform: translateZ(0);
+  contain: strict;
 }
 
 body::before {
@@ -75,6 +79,8 @@ body::before {
   opacity: 0.03;
   z-index: 100;
   pointer-events: none;
+  contain: strict;
+  will-change: auto;
 }
 
 body.project-active { 

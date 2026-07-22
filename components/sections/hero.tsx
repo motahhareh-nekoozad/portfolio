@@ -98,7 +98,7 @@ export default function HeroSection() {
       className="h-screen h-[100dvh] w-full flex flex-col items-center justify-center relative overflow-hidden bg-[#09090d]"
       style={{ fontFamily: "'Quicksand', 'Inter', sans-serif" }}
     >
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-80" />
+      <canvas ref={canvasRef} className="enhanced-canvas absolute inset-0 w-full h-full pointer-events-none z-0 opacity-80" />
 
       <div className="z-10 text-center select-none max-w-5xl px-6 relative gpu-accelerated">
         <h1 className="reveal-item text-[7vw] md:text-[5.5vw] font-extralight tracking-[0.25em] text-white uppercase leading-none shine-text">

@@ -2,6 +2,7 @@
 import React from "react";
 import { Project } from "@/types/type";
 import { CircuitBackground } from "./circuit-background";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface DesktopCardProps {
   project: Project;
@@ -62,7 +63,13 @@ export const DesktopCard = React.memo(({ project, index, onExplore }: DesktopCar
              </div>
 
              <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-transparent">
-                <img src={project.img} className="w-full h-full object-cover scale-105 group-hover:scale-100 group-hover:rotate-1 transition-all duration-[1.5s] ease-out filter brightness-[0.7] group-hover:brightness-100 project-img" alt={project.title} />
+                <OptimizedImage
+                  src={project.img}
+                  alt={project.title}
+                  priority={index === 0}
+                  sizes="(max-width: 1280px) 50vw, 600px"
+                  className="object-cover scale-105 group-hover:scale-100 group-hover:rotate-1 transition-all duration-[1.5s] ease-out brightness-[0.7] group-hover:brightness-100 project-img"
+                />
                 <div className="image-glow-overlay absolute inset-0 pointer-events-none opacity-0"
                      style={{
                        background: `linear-gradient(to bottom, #ffffff11 0%, ${project.accent}55 12%, ${project.accent}0a 35%, transparent 60%)`,

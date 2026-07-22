@@ -1,13 +1,21 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ProjectDetail } from "@/components/projectDetail/project-detail";
 import { PROJECTS } from "@/data/project-data"
-import { BackgroundCanvas } from "@/components/portfolio/background-canvas";
 import { DesktopCard } from "@/components/portfolio/desktop-card";
 import { MobileCard } from "@/components/portfolio/mobile-card";
+
+const BackgroundCanvas = dynamic(
+  () =>
+    import("@/components/portfolio/background-canvas").then((m) => ({
+      default: m.BackgroundCanvas,
+    })),
+  { ssr: false }
+);
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -17,6 +25,7 @@ export function PortfolioSection() {
   const [isDetailed, setIsDetailed] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isInView, setIsInView] = useState(false);
+  const [isTabVisible, setIsTabVisible] = useState(true);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const horizontalRef = useRef<HTMLDivElement>(null);
@@ -24,6 +33,12 @@ export function PortfolioSection() {
 
   useEffect(() => {
     setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const onVisibilityChange = () => setIsTabVisible(!document.hidden);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, []);
 
   useEffect(() => {
@@ -393,7 +408,7 @@ export function PortfolioSection() {
       ref={containerRef} 
       className={`portfolio-section-container relative w-full overflow-hidden bg-[#030303] ${isDetailed ? "is-detailed" : ""}`}
     >
-      {hasMounted && <BackgroundCanvas active={isInView && !activeProject} />}
+      {hasMounted && <BackgroundCanvas active={isInView && isTabVisible && !activeProject} />}
 
       {activeProject && (
         <ProjectDetail project={activeProject} onBack={handleBackToGrid} />

@@ -1,6 +1,80 @@
 "use client";
 import { useEffect, RefObject } from "react";
-import { MobileParticle } from "@/types/type"
+import { MobileParticle } from "@/types/type";
+
+function buildConnectionGrid(
+  particles: { x: number; y: number }[],
+  start: number,
+  end: number,
+  cellSize: number,
+  width: number,
+  height: number
+) {
+  const cols = Math.ceil(width / cellSize) + 1;
+  const rows = Math.ceil(height / cellSize) + 1;
+  const grid: number[][] = Array.from({ length: cols * rows }, () => []);
+
+  for (let i = start; i < end; i++) {
+    const p = particles[i];
+    const col = Math.min(cols - 1, Math.max(0, Math.floor(p.x / cellSize)));
+    const row = Math.min(rows - 1, Math.max(0, Math.floor(p.y / cellSize)));
+    grid[row * cols + col].push(i);
+  }
+
+  return { grid, cols, rows };
+}
+
+function drawGridConnections(
+  ctx: CanvasRenderingContext2D,
+  particles: { x: number; y: number }[],
+  grid: number[][],
+  cols: number,
+  rows: number,
+  maxDistanceSq: number
+) {
+  ctx.beginPath();
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cell = grid[row * cols + col];
+      if (!cell.length) continue;
+
+      for (let a = 0; a < cell.length; a++) {
+        const i = cell[a];
+        const p1 = particles[i];
+
+        for (let b = a + 1; b < cell.length; b++) {
+          const j = cell[b];
+          const p2 = particles[j];
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          if (dx * dx + dy * dy < maxDistanceSq) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+          }
+        }
+
+        for (let nr = row; nr <= row + 1; nr++) {
+          for (let nc = col + (nr === row ? 1 : 0); nc <= col + 1; nc++) {
+            if (nr >= rows || nc >= cols) continue;
+            const neighbor = grid[nr * cols + nc];
+            for (let k = 0; k < neighbor.length; k++) {
+              const j = neighbor[k];
+              if (j <= i) continue;
+              const p2 = particles[j];
+              const dx = p1.x - p2.x;
+              const dy = p1.y - p2.y;
+              if (dx * dx + dy * dy < maxDistanceSq) {
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  ctx.stroke();
+}
 
 export function useHeroCanvas(
   containerRef: RefObject<HTMLDivElement | null>,
@@ -141,6 +215,11 @@ export function useHeroCanvas(
       window.addEventListener("touchend", onTouchEnd, { passive: true });
 
       const animate = () => {
+        if (document.hidden) {
+          animationFrameId = requestAnimationFrame(animate);
+          return;
+        }
+
         ctx.clearRect(0, 0, width, height);
 
         if (touchActive) {
@@ -161,23 +240,15 @@ export function useHeroCanvas(
         ctx.beginPath();
         ctx.strokeStyle = "rgba(56, 189, 248, 0.08)";
         ctx.lineWidth = 0.55;
-        for (let i = 0; i < maxBackgroundParticles; i++) {
-          const p1 = particles[i];
-          const p1x = p1.x;
-          const p1y = p1.y;
-          for (let j = i + 1; j < maxBackgroundParticles; j++) {
-            const p2 = particles[j];
-            const dx = p1x - p2.x;
-            const dy = p1y - p2.y;
-            const distSq = dx * dx + dy * dy;
-
-            if (distSq < connectionDistanceSq) {
-              ctx.moveTo(p1x, p1y);
-              ctx.lineTo(p2.x, p2.y);
-            }
-          }
-        }
-        ctx.stroke();
+        const { grid, cols, rows } = buildConnectionGrid(
+          particles,
+          0,
+          maxBackgroundParticles,
+          connectionDistance,
+          width,
+          height
+        );
+        drawGridConnections(ctx, particles, grid, cols, rows, connectionDistanceSq);
 
         for (let i = 0; i < totalParticles; i++) {
           const p = particles[i];
@@ -366,17 +437,23 @@ export function useHeroCanvas(
       };
 
       const onScroll = () => {
-        const dX = window.scrollX - lastScrollX;
-        const dY = window.scrollY - lastScrollY;
+        if (scrollRafId !== null) return;
+        scrollRafId = requestAnimationFrame(() => {
+          scrollRafId = null;
+          const dX = window.scrollX - lastScrollX;
+          const dY = window.scrollY - lastScrollY;
 
-        lastScrollX = window.scrollX;
-        lastScrollY = window.scrollY;
+          lastScrollX = window.scrollX;
+          lastScrollY = window.scrollY;
 
-        mouse.x += dX;
-        mouse.y += dY;
+          mouse.x += dX;
+          mouse.y += dY;
 
-        updateMousePosition();
+          updateMousePosition();
+        });
       };
+
+      let scrollRafId: number | null = null;
 
       let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
       const onResize = () => {
@@ -403,6 +480,11 @@ export function useHeroCanvas(
 
       const animate = () => {
         if (!ctx || !canvas) return;
+
+        if (document.hidden) {
+          animationFrameId = requestAnimationFrame(animate);
+          return;
+        }
 
         ctx.clearRect(0, 0, width, height);
 
@@ -528,6 +610,7 @@ export function useHeroCanvas(
         window.removeEventListener("resize", onResize);
         observer.disconnect();
         if (resizeTimeout) clearTimeout(resizeTimeout);
+        if (scrollRafId !== null) cancelAnimationFrame(scrollRafId);
         clearTimeout(startTimeout);
         stopLoop();
       };

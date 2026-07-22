@@ -15,15 +15,24 @@ export default function Preloader({ onComplete }: PreloaderProps) {
 
   useEffect(() => {
     let progress = 0;
+    let lastRendered = -1;
+
     const interval = setInterval(() => {
-      const increment = progress < 75 ? Math.floor(Math.random() * 8) + 4 : Math.floor(Math.random() * 3) + 1;
+      const increment =
+        progress < 75
+          ? Math.floor(Math.random() * 8) + 4
+          : Math.floor(Math.random() * 3) + 1;
       progress = Math.min(progress + increment, 100);
-      setLoadingProgress(progress);
+
+      if (progress - lastRendered >= 2 || progress >= 100) {
+        lastRendered = progress;
+        setLoadingProgress(progress);
+      }
 
       if (progress >= 100) {
         clearInterval(interval);
       }
-    }, 50);
+    }, 80);
 
     const handleLoad = () => {
       progress = 100;

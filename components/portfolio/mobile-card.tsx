@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { Project } from "@/types/type";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface MobileCardProps {
   project: Project;
@@ -54,10 +55,12 @@ export const MobileCard = React.memo(({ project, index, onExplore }: MobileCardP
            </div>
 
            <div className="relative w-full h-full rounded-2xl overflow-hidden bg-transparent">
-              <img 
-                src={project.img} 
-                className="w-full h-full object-cover scale-105 project-img brightness-[0.7] transition-[transform,filter] duration-500 ease-out" 
-                alt={project.title} 
+              <OptimizedImage
+                src={project.img}
+                alt={project.title}
+                priority={index === 0}
+                sizes="85vw"
+                className="object-cover scale-105 project-img brightness-[0.7] transition-[transform,filter] duration-500 ease-out"
               />
               <div className="image-glow-overlay absolute inset-0 pointer-events-none opacity-0"
                    style={{
